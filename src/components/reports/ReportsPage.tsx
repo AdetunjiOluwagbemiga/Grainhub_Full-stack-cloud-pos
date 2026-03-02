@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { BarChart3, Download, Calendar, DollarSign, TrendingUp, Package, Percent, ShoppingCart } from 'lucide-react';
+import { BarChart3, Download, Calendar, DollarSign, TrendingUp, Package, Percent, ShoppingCart, Clock } from 'lucide-react';
 import { useSales } from '../../hooks/useSales';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Input } from '../ui/Input';
 import { formatCurrency, formatShortDate } from '../../lib/utils';
 import { exportSalesToExcel } from '../../lib/excelUtils';
+import { ShiftReportsPage } from './ShiftReportsPage';
 import toast from 'react-hot-toast';
 
 export function ReportsPage() {
+  const [activeTab, setActiveTab] = useState<'sales' | 'shifts'>('sales');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -54,17 +56,48 @@ export function ReportsPage() {
     <div className="h-full flex flex-col bg-gray-50">
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Reports & Analytics</h1>
-          <Button onClick={exportToExcel} disabled={completedSales.length === 0}>
-            <Download className="w-4 h-4 mr-2" />
-            Export to Excel
-          </Button>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Reports & Analytics</h1>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => setActiveTab('sales')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  activeTab === 'sales'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4 inline mr-2" />
+                Sales Reports
+              </button>
+              <button
+                onClick={() => setActiveTab('shifts')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  activeTab === 'shifts'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                <Clock className="w-4 h-4 inline mr-2" />
+                Shift Reports
+              </button>
+            </div>
+          </div>
+          {activeTab === 'sales' && (
+            <Button onClick={exportToExcel} disabled={completedSales.length === 0}>
+              <Download className="w-4 h-4 mr-2" />
+              Export to Excel
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="p-4 sm:p-6 flex-1 overflow-auto">
-        <Card className="mb-6">
-          <CardContent className="p-4">
+      {activeTab === 'shifts' ? (
+        <ShiftReportsPage />
+      ) : (
+        <div className="p-4 sm:p-6 flex-1 overflow-auto">
+          <Card className="mb-6">
+            <CardContent className="p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 type="date"
@@ -263,7 +296,8 @@ export function ReportsPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

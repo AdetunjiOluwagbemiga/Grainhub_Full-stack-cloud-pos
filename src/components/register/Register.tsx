@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Scan, ShoppingCart, Trash2, Plus, Minus, Tag, User, Search, Edit2 } from 'lucide-react';
+import { Scan, ShoppingCart, Trash2, Plus, Minus, Tag, User, Search, Edit2, AlertCircle } from 'lucide-react';
 import { useProducts, useProductByBarcode } from '../../hooks/useProducts';
 import { usePaymentMethods } from '../../hooks/useSales';
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
+import { useActiveShift } from '../../hooks/useShifts';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card, CardContent, CardHeader } from '../ui/Card';
@@ -28,6 +29,7 @@ export function Register() {
   const { data: products, isLoading: productsLoading } = useProducts();
   const { data: scannedProduct } = useProductByBarcode(barcode);
   const { data: paymentMethods } = usePaymentMethods();
+  const { data: activeShift } = useActiveShift();
 
   const quickSaleProducts = products?.filter(p => p.is_quick_sale) || [];
 
@@ -304,6 +306,20 @@ export function Register() {
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <div className="flex-1 p-4 sm:p-6 overflow-auto">
+          {!activeShift && (
+            <div className="mb-4 bg-amber-50 border-l-4 border-amber-400 p-4 rounded">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-semibold text-amber-900">No Active Shift</h3>
+                  <p className="text-sm text-amber-700 mt-1">
+                    You must open a shift before processing sales. Click "Open Shift" in the sidebar to get started.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           <Card className="mb-4">
             <CardContent className="p-4">
               <div className="flex gap-2 mb-3">

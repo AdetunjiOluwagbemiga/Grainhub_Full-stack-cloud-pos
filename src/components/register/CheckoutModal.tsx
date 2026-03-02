@@ -6,6 +6,7 @@ import { Input } from '../ui/Input';
 import { Card, CardContent } from '../ui/Card';
 import { useCreateSale, usePaymentMethods } from '../../hooks/useSales';
 import { useAuth } from '../../contexts/AuthContext';
+import { useActiveShift } from '../../hooks/useShifts';
 import { CartItem } from '../../types/database';
 import { formatCurrency, generateReceiptHTML, printReceipt } from '../../lib/utils';
 import toast from 'react-hot-toast';
@@ -39,6 +40,7 @@ export function CheckoutModal({
 }: CheckoutModalProps) {
   const { profile } = useAuth();
   const { data: paymentMethods } = usePaymentMethods();
+  const { data: activeShift } = useActiveShift();
   const createSale = useCreateSale();
 
   const [payments, setPayments] = useState<PaymentEntry[]>([]);
@@ -88,6 +90,11 @@ export function CheckoutModal({
       return;
     }
 
+    if (!activeShift) {
+      toast.error('No active shift. Please open a shift before processing sales.');
+      return;
+    }
+
     setProcessing(true);
 
     try {
@@ -98,6 +105,7 @@ export function CheckoutModal({
           location_id: defaultLocationId,
           customer_id: null,
           cashier_id: profile.id,
+          shift_id: activeShift.id,
           status: 'completed',
           subtotal,
           discount_amount: discount,
