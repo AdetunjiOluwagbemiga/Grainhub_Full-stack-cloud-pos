@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Scan, ShoppingCart, Trash2, Plus, Minus, Tag, User, Search, Edit2 } from 'lucide-react';
 import { useProducts, useProductByBarcode } from '../../hooks/useProducts';
 import { usePaymentMethods } from '../../hooks/useSales';
+import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card, CardContent, CardHeader } from '../ui/Card';
@@ -29,6 +30,53 @@ export function Register() {
   const { data: paymentMethods } = usePaymentMethods();
 
   const quickSaleProducts = products?.filter(p => p.is_quick_sale) || [];
+
+  const playBeep = () => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.value = 800;
+    oscillator.type = 'sine';
+
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+  };
+
+  const handleGlobalScan = (scannedCode: string) => {
+    if (!products || products.length === 0) {
+      toast.error('No products available');
+      return;
+    }
+
+    const searchValue = scannedCode.trim().toLowerCase();
+    const product = products.find(p =>
+      p.sku.toLowerCase() === searchValue ||
+      p.barcode?.toLowerCase() === searchValue ||
+      p.barcodes?.some(b => b.barcode.toLowerCase() === searchValue)
+    );
+
+    if (product) {
+      addToCart(product, true);
+      playBeep();
+      toast.success(`Scanned: ${product.name}`, { duration: 2000 });
+    } else {
+      toast.error(`No product found: ${scannedCode}`);
+    }
+  };
+
+  useBarcodeScanner({
+    onScan: handleGlobalScan,
+    minLength: 3,
+    maxTimeBetweenKeys: 50,
+    enabled: !checkoutOpen,
+  });
 
   const searchResults = products?.filter(p =>
     searchTerm.length > 0 && (
@@ -120,13 +168,16 @@ export function Register() {
     }
   };
 
-  const addToCart = (product: any) => {
+  const addToCart = (product: any, silent = false) => {
     const existingIndex = cart.findIndex(
       item => item.sku === product.sku
     );
 
     if (existingIndex >= 0) {
       updateQuantity(existingIndex, cart[existingIndex].quantity + 1);
+      if (!silent) {
+        toast.success(`Updated ${product.name} quantity`);
+      }
     } else {
       const lineCalc = calculateLineTotal(
         1,
@@ -152,7 +203,9 @@ export function Register() {
       };
 
       setCart([...cart, newItem]);
-      toast.success(`Added ${product.name} to cart`);
+      if (!silent) {
+        toast.success(`Added ${product.name} to cart`);
+      }
     }
 
     setBarcode('');
