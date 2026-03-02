@@ -8,6 +8,9 @@ import { MainLayout } from './components/layout/MainLayout';
 import { Register } from './components/register/Register';
 import { ProductsPage } from './components/products/ProductsPage';
 import { InventoryPage } from './components/inventory/InventoryPage';
+import { ValuationDashboard } from './components/valuation/ValuationDashboard';
+import { SuppliersPage } from './components/suppliers/SuppliersPage';
+import { PurchaseOrdersPage } from './components/procurement/PurchaseOrdersPage';
 import { CustomersPage } from './components/customers/CustomersPage';
 import { ReportsPage } from './components/reports/ReportsPage';
 import { SettingsPage } from './components/settings/SettingsPage';
@@ -36,6 +39,12 @@ function AppContent() {
         return <ProductsPage />;
       case 'inventory':
         return <InventoryPage />;
+      case 'valuation':
+        return <ValuationDashboard />;
+      case 'suppliers':
+        return <SuppliersPage />;
+      case 'purchase-orders':
+        return <PurchaseOrdersPage />;
       case 'customers':
         return <CustomersPage />;
       case 'reports':
