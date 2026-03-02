@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CreditCard, DollarSign, Printer } from 'lucide-react';
+import { CreditCard, DollarSign, Printer, CheckCircle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -48,6 +48,8 @@ export function CheckoutModal({
   const [paymentAmount, setPaymentAmount] = useState('');
   const [reference, setReference] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [saleCompleted, setSaleCompleted] = useState(false);
+  const [completedSaleData, setCompletedSaleData] = useState<any>(null);
 
   const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
   const remaining = total - totalPaid;
@@ -77,6 +79,45 @@ export function CheckoutModal({
 
   const removePayment = (index: number) => {
     setPayments(payments.filter((_, i) => i !== index));
+  };
+
+  const handlePrintReceipt = () => {
+    if (!completedSaleData) return;
+
+    try {
+      const receiptHTML = generateReceiptHTML(
+        {
+          sale_number: completedSaleData.sale_number,
+          created_at: completedSaleData.created_at,
+          subtotal: completedSaleData.subtotal,
+          discount_amount: completedSaleData.discount_amount,
+          tax_amount: completedSaleData.tax_amount,
+          total_amount: completedSaleData.total_amount,
+          amount_paid: completedSaleData.amount_paid,
+          change_amount: completedSaleData.change_amount,
+        },
+        cart.map(item => ({
+          product_name: item.product_name,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          line_total: item.line_total,
+        })),
+        'Cloud POS System',
+        '123 Main Street'
+      );
+
+      printReceipt(receiptHTML);
+      toast.success('Receipt sent to printer');
+    } catch (printError) {
+      console.error('Print failed:', printError);
+      toast.error('Failed to print receipt. You can reprint from Sales History.');
+    }
+  };
+
+  const handleCloseAndFinish = () => {
+    onComplete();
+    setSaleCompleted(false);
+    setCompletedSaleData(null);
   };
 
   const handleCompleteSale = async () => {
@@ -127,31 +168,9 @@ export function CheckoutModal({
         locationId: defaultLocationId,
       });
 
-      const receiptHTML = generateReceiptHTML(
-        {
-          sale_number: saleData.sale_number,
-          created_at: saleData.created_at,
-          subtotal: saleData.subtotal,
-          discount_amount: saleData.discount_amount,
-          tax_amount: saleData.tax_amount,
-          total_amount: saleData.total_amount,
-          amount_paid: saleData.amount_paid,
-          change_amount: saleData.change_amount,
-        },
-        cart.map(item => ({
-          product_name: item.product_name,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          line_total: item.line_total,
-        })),
-        'Cloud POS System',
-        '123 Main Street'
-      );
-
-      printReceipt(receiptHTML);
-
-      toast.success('Sale completed successfully');
-      onComplete();
+      setCompletedSaleData(saleData);
+      setSaleCompleted(true);
+      toast.success('Payment completed successfully!');
     } catch (error) {
       toast.error((error as Error).message || 'Failed to complete sale');
     } finally {
@@ -292,16 +311,52 @@ export function CheckoutModal({
             </div>
           </div>
 
-          <Button
-            className="w-full"
-            size="lg"
-            variant="success"
-            onClick={handleCompleteSale}
-            disabled={totalPaid < total || processing || payments.length === 0}
-          >
-            <Printer className="w-5 h-5 mr-2" />
-            {processing ? 'Processing...' : 'Complete Sale & Print Receipt'}
-          </Button>
+          {!saleCompleted ? (
+            <Button
+              className="w-full"
+              size="lg"
+              variant="success"
+              onClick={handleCompleteSale}
+              disabled={totalPaid < total || processing || payments.length === 0}
+            >
+              <CheckCircle className="w-5 h-5 mr-2" />
+              {processing ? 'Processing...' : 'Complete Payment'}
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                <CheckCircle className="w-12 h-12 mx-auto text-green-600 mb-2" />
+                <h4 className="text-lg font-semibold text-green-900">Payment Completed!</h4>
+                <p className="text-sm text-green-700 mt-1">
+                  Sale #{completedSaleData?.sale_number}
+                </p>
+                {change > 0 && (
+                  <p className="text-lg font-bold text-green-900 mt-2">
+                    Change Due: {formatCurrency(change)}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={handlePrintReceipt}
+                >
+                  <Printer className="w-5 h-5 mr-2" />
+                  Print Receipt
+                </Button>
+
+                <Button
+                  variant="success"
+                  size="lg"
+                  onClick={handleCloseAndFinish}
+                >
+                  Finish
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Modal>
