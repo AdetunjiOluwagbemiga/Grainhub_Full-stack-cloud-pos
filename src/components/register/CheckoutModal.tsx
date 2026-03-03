@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CreditCard, DollarSign, Printer, CheckCircle } from 'lucide-react';
+import { Printer, CheckCircle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -39,9 +39,13 @@ export function CheckoutModal({
   onComplete,
 }: CheckoutModalProps) {
   const { profile } = useAuth();
-  const { data: paymentMethods } = usePaymentMethods();
+  const { data: allPaymentMethods } = usePaymentMethods();
   const { data: activeShift } = useActiveShift();
   const createSale = useCreateSale();
+
+  const paymentMethods = allPaymentMethods?.filter(
+    method => method.code === 'cash' || method.code === 'pos'
+  );
 
   const [payments, setPayments] = useState<PaymentEntry[]>([]);
   const [selectedMethod, setSelectedMethod] = useState('');
@@ -140,7 +144,7 @@ export function CheckoutModal({
     setProcessing(true);
 
     try {
-      const defaultLocationId = 'eb23cc18-3aa6-4a73-9115-ed493974c5fa';
+      const defaultLocationId = '0bf6fef6-4492-4177-90b0-bb987203d9e8';
 
       const saleData = await createSale.mutateAsync({
         sale: {
@@ -263,7 +267,6 @@ export function CheckoutModal({
                 onClick={addPayment}
                 disabled={!selectedMethod || !paymentAmount}
               >
-                <DollarSign className="w-4 h-4 mr-2" />
                 Add Payment
               </Button>
             </CardContent>
