@@ -261,13 +261,32 @@ export function generateReceiptHTML(
 }
 
 export function printReceipt(html: string) {
-  const printWindow = window.open('', '_blank');
-  if (printWindow) {
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.onload = () => {
-      printWindow.print();
-      printWindow.close();
-    };
+  const printWindow = window.open('', '_blank', 'width=800,height=600');
+  if (!printWindow) {
+    throw new Error('Print window was blocked by browser. Please allow popups for this site.');
   }
+
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+
+  setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+    setTimeout(() => {
+      printWindow.close();
+    }, 100);
+  }, 250);
+}
+
+export function downloadReceipt(html: string, filename: string = 'receipt.html') {
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }

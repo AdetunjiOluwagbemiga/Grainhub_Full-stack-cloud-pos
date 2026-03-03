@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Printer, CheckCircle } from 'lucide-react';
+import { Printer, CheckCircle, Download } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -8,7 +8,7 @@ import { useCreateSale, usePaymentMethods } from '../../hooks/useSales';
 import { useAuth } from '../../contexts/AuthContext';
 import { useActiveShift } from '../../hooks/useShifts';
 import { CartItem } from '../../types/database';
-import { formatCurrency, generateReceiptHTML, printReceipt } from '../../lib/utils';
+import { formatCurrency, generateReceiptHTML, printReceipt, downloadReceipt } from '../../lib/utils';
 import toast from 'react-hot-toast';
 
 interface CheckoutModalProps {
@@ -85,36 +85,55 @@ export function CheckoutModal({
     setPayments(payments.filter((_, i) => i !== index));
   };
 
+  const getReceiptHTML = () => {
+    if (!completedSaleData) return '';
+
+    return generateReceiptHTML(
+      {
+        sale_number: completedSaleData.sale_number,
+        created_at: completedSaleData.created_at,
+        subtotal: completedSaleData.subtotal,
+        discount_amount: completedSaleData.discount_amount,
+        tax_amount: completedSaleData.tax_amount,
+        total_amount: completedSaleData.total_amount,
+        amount_paid: completedSaleData.amount_paid,
+        change_amount: completedSaleData.change_amount,
+      },
+      cart.map(item => ({
+        product_name: item.product_name,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        line_total: item.line_total,
+      })),
+      'Cloud POS System',
+      '123 Main Street'
+    );
+  };
+
   const handlePrintReceipt = () => {
     if (!completedSaleData) return;
 
     try {
-      const receiptHTML = generateReceiptHTML(
-        {
-          sale_number: completedSaleData.sale_number,
-          created_at: completedSaleData.created_at,
-          subtotal: completedSaleData.subtotal,
-          discount_amount: completedSaleData.discount_amount,
-          tax_amount: completedSaleData.tax_amount,
-          total_amount: completedSaleData.total_amount,
-          amount_paid: completedSaleData.amount_paid,
-          change_amount: completedSaleData.change_amount,
-        },
-        cart.map(item => ({
-          product_name: item.product_name,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          line_total: item.line_total,
-        })),
-        'Cloud POS System',
-        '123 Main Street'
-      );
-
+      const receiptHTML = getReceiptHTML();
       printReceipt(receiptHTML);
       toast.success('Receipt sent to printer');
     } catch (printError) {
       console.error('Print failed:', printError);
-      toast.error('Failed to print receipt. You can reprint from Sales History.');
+      toast.error((printError as Error).message || 'Failed to print receipt. Try downloading instead.');
+    }
+  };
+
+  const handleDownloadReceipt = () => {
+    if (!completedSaleData) return;
+
+    try {
+      const receiptHTML = getReceiptHTML();
+      const filename = `receipt-${completedSaleData.sale_number}.html`;
+      downloadReceipt(receiptHTML, filename);
+      toast.success('Receipt downloaded successfully');
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download receipt');
     }
   };
 
@@ -341,19 +360,31 @@ export function CheckoutModal({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={handlePrintReceipt}
-                >
-                  <Printer className="w-5 h-5 mr-2" />
-                  Print Receipt
-                </Button>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handlePrintReceipt}
+                  >
+                    <Printer className="w-5 h-5 mr-2" />
+                    Print
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    onClick={handleDownloadReceipt}
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    Download
+                  </Button>
+                </div>
 
                 <Button
                   variant="success"
                   size="lg"
+                  className="w-full"
                   onClick={handleCloseAndFinish}
                 >
                   Finish
