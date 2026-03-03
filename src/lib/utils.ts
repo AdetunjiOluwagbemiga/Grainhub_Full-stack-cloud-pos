@@ -125,13 +125,26 @@ export function generateReceiptHTML(
     <html>
     <head>
       <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
         @media print {
           @page {
             margin: 0;
             size: 80mm auto;
           }
-          body { margin: 0; }
+          body {
+            margin: 0;
+            padding: 0;
+          }
+          html, body {
+            width: 80mm;
+            height: auto;
+          }
         }
         body {
           font-family: 'Courier New', monospace;
@@ -139,6 +152,8 @@ export function generateReceiptHTML(
           width: 80mm;
           margin: 0 auto;
           padding: 5mm;
+          background: white;
+          color: black;
         }
         .header {
           text-align: center;
@@ -261,21 +276,43 @@ export function generateReceiptHTML(
 }
 
 export function printReceipt(html: string) {
-  const printWindow = window.open('', '_blank', 'width=800,height=600');
-  if (!printWindow) {
-    throw new Error('Print window was blocked by browser. Please allow popups for this site.');
+  const existingFrame = document.getElementById('print-receipt-frame');
+  if (existingFrame) {
+    existingFrame.remove();
   }
 
-  printWindow.document.open();
-  printWindow.document.write(html);
-  printWindow.document.close();
+  const iframe = document.createElement('iframe');
+  iframe.id = 'print-receipt-frame';
+  iframe.style.position = 'fixed';
+  iframe.style.top = '-9999px';
+  iframe.style.left = '-9999px';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = 'none';
+
+  document.body.appendChild(iframe);
+
+  const iframeDoc = iframe.contentWindow?.document;
+  if (!iframeDoc) {
+    throw new Error('Failed to access iframe document');
+  }
+
+  iframeDoc.open();
+  iframeDoc.write(html);
+  iframeDoc.close();
 
   setTimeout(() => {
-    printWindow.focus();
-    printWindow.print();
-    setTimeout(() => {
-      printWindow.close();
-    }, 100);
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+
+      setTimeout(() => {
+        iframe.remove();
+      }, 1000);
+    } catch (error) {
+      iframe.remove();
+      throw new Error('Failed to trigger print dialog');
+    }
   }, 250);
 }
 
