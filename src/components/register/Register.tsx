@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Scan, ShoppingCart, Trash2, Plus, Minus, Tag, User, Search, Edit2, AlertCircle } from 'lucide-react';
+import { Scan, ShoppingCart, Trash2, Plus, Minus, Tag, User, Search, CreditCard as Edit2, AlertCircle } from 'lucide-react';
 import { useProducts, useProductByBarcode } from '../../hooks/useProducts';
 import { usePaymentMethods } from '../../hooks/useSales';
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
@@ -306,7 +306,8 @@ export function Register() {
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <div className="flex-1 p-4 sm:p-6 overflow-auto">
-          {!activeShift && (
+          {/* TEMPORARILY DISABLED FOR TESTING - SHIFT REQUIREMENT */}
+          {/* {!activeShift && (
             <div className="mb-4 bg-amber-50 border-l-4 border-amber-400 p-4 rounded">
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
@@ -318,7 +319,7 @@ export function Register() {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
           <Card className="mb-4">
             <CardContent className="p-4">

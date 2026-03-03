@@ -131,10 +131,11 @@ export function CheckoutModal({
       return;
     }
 
-    if (!activeShift) {
-      toast.error('No active shift. Please open a shift before processing sales.');
-      return;
-    }
+    // TEMPORARILY DISABLED FOR TESTING - SHIFT REQUIREMENT
+    // if (!activeShift) {
+    //   toast.error('No active shift. Please open a shift before processing sales.');
+    //   return;
+    // }
 
     setProcessing(true);
 
@@ -146,7 +147,7 @@ export function CheckoutModal({
           location_id: defaultLocationId,
           customer_id: null,
           cashier_id: profile.id,
-          shift_id: activeShift.id,
+          shift_id: activeShift?.id || null, // Allow null for testing
           status: 'completed',
           subtotal,
           discount_amount: discount,

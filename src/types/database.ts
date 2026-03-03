@@ -146,6 +146,7 @@ export interface Database {
           location_id: string;
           customer_id: string | null;
           cashier_id: string;
+          shift_id: string | null;
           status: SaleStatus;
           subtotal: number;
           discount_amount: number;
