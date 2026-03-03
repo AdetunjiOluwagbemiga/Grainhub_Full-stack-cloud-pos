@@ -134,7 +134,9 @@ export function useCreateSale() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
-      toast.success('Sale completed successfully');
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['valuation'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to complete sale');

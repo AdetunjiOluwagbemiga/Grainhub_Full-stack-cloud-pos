@@ -272,12 +272,12 @@ export function Register() {
     });
   };
 
-  const clearCart = () => {
+  const clearCart = (silent = false) => {
     if (cart.length === 0) return;
 
-    if (window.confirm('Are you sure you want to clear the entire cart?')) {
-      setCart([]);
-      setSelectedCustomer(null);
+    setCart([]);
+    setSelectedCustomer(null);
+    if (!silent) {
       toast.success('Cart cleared');
     }
   };
@@ -710,7 +710,7 @@ export function Register() {
         tax={totalTax}
         total={total}
         onComplete={() => {
-          clearCart();
+          clearCart(true);
           setCheckoutOpen(false);
         }}
       />

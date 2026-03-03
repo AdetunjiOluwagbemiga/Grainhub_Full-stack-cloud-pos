@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Printer, CheckCircle, Download } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
@@ -58,6 +58,18 @@ export function CheckoutModal({
   const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
   const remaining = total - totalPaid;
   const change = totalPaid > total ? totalPaid - total : 0;
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPayments([]);
+      setSelectedMethod('');
+      setPaymentAmount('');
+      setReference('');
+      setSaleCompleted(false);
+      setCompletedSaleData(null);
+      setProcessing(false);
+    }
+  }, [isOpen]);
 
   const addPayment = () => {
     if (!selectedMethod || !paymentAmount || parseFloat(paymentAmount) <= 0) {
@@ -138,9 +150,13 @@ export function CheckoutModal({
   };
 
   const handleCloseAndFinish = () => {
-    onComplete();
     setSaleCompleted(false);
     setCompletedSaleData(null);
+    setPayments([]);
+    setSelectedMethod('');
+    setPaymentAmount('');
+    setReference('');
+    onComplete();
   };
 
   const handleCompleteSale = async () => {
