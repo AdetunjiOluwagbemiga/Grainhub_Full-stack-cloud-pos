@@ -59,7 +59,6 @@ export function useSaleById(saleId: string | null) {
 
 export function useCreateSale() {
   const queryClient = useQueryClient();
-  const updateInventory = useUpdateInventory();
 
   return useMutation({
     mutationFn: async ({
@@ -71,65 +70,17 @@ export function useCreateSale() {
       sale: Omit<Sale, 'id' | 'created_at' | 'updated_at' | 'sale_number'>;
       items: CartItem[];
       payments: Omit<Payment, 'id' | 'created_at' | 'sale_id'>[];
-      locationId: string;
+      locationId: string | null;
     }) => {
-      const saleNumber = `SALE-${Date.now()}`;
+      const { data, error } = await supabase.rpc('complete_sale', {
+        p_sale: sale,
+        p_items: items,
+        p_payments: payments,
+        p_location_id: locationId,
+      });
 
-      const { data: saleData, error: saleError } = await supabase
-        .from('sales')
-        .insert({
-          ...sale,
-          sale_number: saleNumber,
-        })
-        .select()
-        .single();
-
-      if (saleError) throw saleError;
-
-      const saleItems = items.map(item => ({
-        sale_id: saleData.id,
-        product_id: item.product_id,
-        variant_id: item.variant_id,
-        product_name: item.product_name,
-        sku: item.sku,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        discount_amount: item.discount_amount,
-        discount_percentage: item.discount_percentage,
-        tax_rate: item.tax_rate,
-        tax_amount: item.tax_amount,
-        line_total: item.line_total,
-        cost_price: item.cost_price,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('sale_items')
-        .insert(saleItems);
-
-      if (itemsError) throw itemsError;
-
-      const paymentRecords = payments.map(payment => ({
-        ...payment,
-        sale_id: saleData.id,
-      }));
-
-      const { error: paymentsError } = await supabase
-        .from('payments')
-        .insert(paymentRecords);
-
-      if (paymentsError) throw paymentsError;
-
-      for (const item of items) {
-        await updateInventory.mutateAsync({
-          locationId,
-          productId: item.product_id,
-          variantId: item.variant_id,
-          quantityChange: -item.quantity,
-          batchNumber: null,
-        });
-      }
-
-      return saleData;
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sales'] });
@@ -137,6 +88,7 @@ export function useCreateSale() {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['valuation'] });
       queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+      toast.success('Sale completed successfully');
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to complete sale');

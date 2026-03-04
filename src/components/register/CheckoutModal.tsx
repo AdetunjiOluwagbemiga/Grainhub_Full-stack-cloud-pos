@@ -179,14 +179,11 @@ export function CheckoutModal({
     setProcessing(true);
 
     try {
-      const defaultLocationId = '0bf6fef6-4492-4177-90b0-bb987203d9e8';
-
       const saleData = await createSale.mutateAsync({
         sale: {
-          location_id: defaultLocationId,
           customer_id: null,
           cashier_id: profile.id,
-          shift_id: activeShift?.id || null, // Allow null for testing
+          shift_id: activeShift?.id || null,
           status: 'completed',
           subtotal,
           discount_amount: discount,
@@ -198,19 +195,14 @@ export function CheckoutModal({
           loyalty_points_earned: 0,
           loyalty_points_redeemed: 0,
           notes: null,
-          voided_by: null,
-          voided_at: null,
-          void_reason: null,
-          completed_at: new Date().toISOString(),
         },
         items: cart,
         payments,
-        locationId: defaultLocationId,
+        locationId: null,
       });
 
       setCompletedSaleData(saleData);
       setSaleCompleted(true);
-      toast.success('Payment completed successfully!');
     } catch (error) {
       toast.error((error as Error).message || 'Failed to complete sale');
     } finally {
