@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Package, AlertTriangle, Plus, Minus, Download, Upload, FileDown } from 'lucide-react';
 import { useInventory, useLowStockItems, useStockAdjustment } from '../../hooks/useInventory';
+import { useInventoryValuation } from '../../hooks/useValuation';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Modal } from '../ui/Modal';
@@ -11,11 +12,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
 export function InventoryPage() {
-  const { data: inventory, isLoading } = useInventory();
+  const { data: rawInventory, isLoading: rawLoading } = useInventory();
+  const { data: groupedInventory, isLoading: valuationLoading } = useInventoryValuation();
   const { data: lowStock } = useLowStockItems();
   const stockAdjustment = useStockAdjustment();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isLoading = rawLoading || valuationLoading;
 
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -52,11 +56,11 @@ export function InventoryPage() {
   };
 
   const handleExport = () => {
-    if (!inventory || inventory.length === 0) {
+    if (!rawInventory || rawInventory.length === 0) {
       toast.error('No inventory to export');
       return;
     }
-    exportInventoryToExcel(inventory);
+    exportInventoryToExcel(rawInventory);
     toast.success('Inventory exported successfully!');
   };
 
@@ -172,8 +176,8 @@ export function InventoryPage() {
         )}
 
         <div className="grid grid-cols-1 gap-4">
-          {inventory?.map((item: any) => (
-            <Card key={item.id}>
+          {groupedInventory?.map((item: any) => (
+            <Card key={item.product_id}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -181,46 +185,62 @@ export function InventoryPage() {
                       <Package className="w-5 h-5 text-gray-400" />
                       <div>
                         <h3 className="font-semibold text-gray-900">
-                          {item.product?.name || item.variant?.variant_name}
+                          {item.product_name}
                         </h3>
                         <p className="text-sm text-gray-600">
-                          Location: {item.location?.name}
+                          SKU: {item.sku}
+                          {item.category_name && ` · ${item.category_name}`}
                         </p>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-4 mt-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
                       <div>
                         <span className="text-xs text-gray-500">Current Stock</span>
-                        <p className="text-lg font-bold text-gray-900">{item.quantity}</p>
+                        <p className={`text-lg font-bold ${item.has_negative_stock ? 'text-red-600' : 'text-gray-900'}`}>
+                          {item.stock_quantity}
+                        </p>
                       </div>
                       <div>
-                        <span className="text-xs text-gray-500">Low Stock Threshold</span>
-                        <p className="font-medium text-gray-900">{item.low_stock_threshold}</p>
+                        <span className="text-xs text-gray-500">Cost Price</span>
+                        <p className="font-medium text-gray-900">{formatCurrency(item.cost_price)}</p>
                       </div>
-                      {item.batch_number && (
-                        <div>
-                          <span className="text-xs text-gray-500">Batch</span>
-                          <p className="font-medium text-gray-900">{item.batch_number}</p>
-                        </div>
-                      )}
-                      {item.expiry_date && (
-                        <div>
-                          <span className="text-xs text-gray-500">Expiry Date</span>
-                          <p className="font-medium text-gray-900">
-                            {new Date(item.expiry_date).toLocaleDateString()}
-                          </p>
-                        </div>
-                      )}
+                      <div>
+                        <span className="text-xs text-gray-500">Retail Price</span>
+                        <p className="font-medium text-gray-900">{formatCurrency(item.retail_price)}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-gray-500">Asset Value</span>
+                        <p className="font-medium text-green-600">{formatCurrency(item.total_cost_value)}</p>
+                      </div>
                     </div>
+
+                    {item.has_negative_stock && (
+                      <div className="mt-3 bg-red-50 border border-red-200 rounded px-3 py-2 text-sm text-red-700">
+                        <AlertTriangle className="w-4 h-4 inline mr-1" />
+                        Warning: Negative stock detected
+                      </div>
+                    )}
+
+                    {item.stock_status === 'low_stock' && (
+                      <div className="mt-3 bg-orange-50 border border-orange-200 rounded px-3 py-2 text-sm text-orange-700">
+                        <AlertTriangle className="w-4 h-4 inline mr-1" />
+                        Low stock alert
+                      </div>
+                    )}
                   </div>
 
                   <Button
                     variant="secondary"
                     size="sm"
                     onClick={() => {
-                      setSelectedItem(item);
-                      setAdjustModalOpen(true);
+                      const rawItem = rawInventory?.find(inv => inv.product_id === item.product_id);
+                      if (rawItem) {
+                        setSelectedItem(rawItem);
+                        setAdjustModalOpen(true);
+                      } else {
+                        toast.error('Cannot adjust stock for this product');
+                      }
                     }}
                   >
                     Adjust Stock
@@ -230,7 +250,7 @@ export function InventoryPage() {
             </Card>
           ))}
 
-          {inventory?.length === 0 && (
+          {groupedInventory?.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center">
                 <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />

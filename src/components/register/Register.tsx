@@ -171,12 +171,25 @@ export function Register() {
   };
 
   const addToCart = (product: any, silent = false) => {
+    const availableStock = product.current_stock || 0;
+
     const existingIndex = cart.findIndex(
       item => item.sku === product.sku
     );
 
+    const currentCartQty = existingIndex >= 0 ? cart[existingIndex].quantity : 0;
+    const newQty = currentCartQty + 1;
+
+    if (newQty > availableStock) {
+      toast.error(
+        `Cannot add more. Only ${availableStock} units available for ${product.name}`,
+        { duration: 4000 }
+      );
+      return;
+    }
+
     if (existingIndex >= 0) {
-      updateQuantity(existingIndex, cart[existingIndex].quantity + 1);
+      updateQuantity(existingIndex, newQty);
       if (!silent) {
         toast.success(`Updated ${product.name} quantity`);
       }
@@ -224,6 +237,21 @@ export function Register() {
     }
 
     const item = cart[index];
+
+    if (products) {
+      const product = products.find(p => p.id === item.product_id);
+      if (product) {
+        const availableStock = product.current_stock || 0;
+        if (newQuantity > availableStock) {
+          toast.error(
+            `Cannot update quantity. Only ${availableStock} units available for ${item.product_name}`,
+            { duration: 4000 }
+          );
+          return;
+        }
+      }
+    }
+
     const lineCalc = calculateLineTotal(
       newQuantity,
       item.unit_price,
@@ -286,6 +314,38 @@ export function Register() {
   const totalDiscount = cart.reduce((sum, item) => sum + item.discount_amount, 0);
   const totalTax = cart.reduce((sum, item) => sum + item.tax_amount, 0);
   const total = cart.reduce((sum, item) => sum + item.line_total, 0);
+
+  const validateStockBeforeCheckout = () => {
+    if (!products) {
+      toast.error('Product data not loaded');
+      return false;
+    }
+
+    for (const cartItem of cart) {
+      const product = products.find(p => p.id === cartItem.product_id);
+      if (!product) {
+        toast.error(`Product not found: ${cartItem.product_name}`);
+        return false;
+      }
+
+      const availableStock = product.current_stock || 0;
+      if (cartItem.quantity > availableStock) {
+        toast.error(
+          `Insufficient stock for ${cartItem.product_name}. Available: ${availableStock}, Requested: ${cartItem.quantity}`,
+          { duration: 5000 }
+        );
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleCheckout = () => {
+    if (validateStockBeforeCheckout()) {
+      setCheckoutOpen(true);
+    }
+  };
 
   return (
     <div className="h-screen flex flex-col bg-gray-50">
@@ -683,7 +743,7 @@ export function Register() {
             <Button
               className="w-full"
               size="lg"
-              onClick={() => setCheckoutOpen(true)}
+              onClick={handleCheckout}
               disabled={cart.length === 0}
             >
               Checkout

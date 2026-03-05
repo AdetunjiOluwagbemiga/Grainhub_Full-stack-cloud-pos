@@ -11,8 +11,19 @@ import toast from 'react-hot-toast';
 
 export function ReportsPage() {
   const [activeTab, setActiveTab] = useState<'sales' | 'shifts'>('sales');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+
+  const getMonthStart = () => {
+    const date = new Date();
+    date.setDate(1);
+    return date.toISOString().split('T')[0];
+  };
+
+  const getToday = () => {
+    return new Date().toISOString().split('T')[0];
+  };
+
+  const [startDate, setStartDate] = useState(getMonthStart());
+  const [endDate, setEndDate] = useState(getToday());
 
   const { data: sales, isLoading } = useSales(
     startDate || undefined,
