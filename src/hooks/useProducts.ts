@@ -13,13 +13,19 @@ export function useProducts() {
           *,
           category:categories(*),
           barcodes(*),
-          inventory(*)
+          inventory(quantity)
         `)
         .eq('is_active', true)
         .order('name');
 
       if (error) throw error;
-      return data as ProductWithInventory[];
+
+      const productsWithStock = (data || []).map((product: any) => ({
+        ...product,
+        current_stock: product.inventory?.reduce((sum: number, inv: any) => sum + (inv.quantity || 0), 0) || 0,
+      }));
+
+      return productsWithStock as ProductWithInventory[];
     },
   });
 }

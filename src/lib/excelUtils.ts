@@ -168,15 +168,47 @@ export interface InventoryExcelRow {
   'Reorder Quantity': number;
 }
 
-export async function exportInventoryToExcel(inventory: any[]) {
-  const data: InventoryExcelRow[] = inventory.map((item) => ({
-    SKU: item.products?.sku || '',
-    'Product Name': item.products?.name || '',
-    Location: item.locations?.name || '',
-    Quantity: item.quantity_on_hand,
-    'Reorder Level': item.reorder_level || 0,
-    'Reorder Quantity': item.reorder_quantity || 0,
-  }));
+export async function exportInventoryToExcel(inventory?: any[]) {
+  let data: InventoryExcelRow[];
+
+  if (inventory && inventory.length > 0) {
+    data = inventory.map((item) => ({
+      SKU: item.product?.sku || '',
+      'Product Name': item.product?.name || '',
+      Location: item.location?.name || '',
+      Quantity: item.quantity || 0,
+      'Reorder Level': item.low_stock_threshold || 0,
+      'Reorder Quantity': 0,
+    }));
+  } else {
+    const { data: products, error } = await supabase
+      .from('products')
+      .select(`
+        sku,
+        name,
+        inventory (
+          quantity,
+          low_stock_threshold,
+          location:locations (name)
+        )
+      `)
+      .eq('is_active', true)
+      .order('name');
+
+    if (error) throw error;
+
+    data = (products || []).map((product: any) => {
+      const inv = product.inventory?.[0];
+      return {
+        SKU: product.sku,
+        'Product Name': product.name,
+        Location: inv?.location?.name || 'Main Store',
+        Quantity: inv?.quantity || 0,
+        'Reorder Level': inv?.low_stock_threshold || 0,
+        'Reorder Quantity': 0,
+      };
+    });
+  }
 
   const worksheet = XLSX.utils.json_to_sheet(data);
 

@@ -114,6 +114,8 @@ export function useUpdateInventory() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-valuation'] });
     },
   });
 }
@@ -150,6 +152,8 @@ export function useStockAdjustment() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
       queryClient.invalidateQueries({ queryKey: ['stock-adjustments'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory-valuation'] });
       toast.success('Stock adjustment recorded');
     },
     onError: (error: Error) => {
