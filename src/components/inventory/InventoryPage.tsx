@@ -238,12 +238,20 @@ export function InventoryPage() {
                         inv.product_id === item.product_id &&
                         (!inv.variant_id || inv.variant_id === item.variant_id)
                       );
+
                       if (rawItem) {
                         setSelectedItem(rawItem);
-                        setAdjustModalOpen(true);
                       } else {
-                        toast.error('Cannot adjust stock for this product');
+                        const mainLocationId = 'eb23cc18-3aa6-4a73-9115-ed493974c5fa';
+                        setSelectedItem({
+                          product_id: item.product_id,
+                          variant_id: item.variant_id || null,
+                          location_id: mainLocationId,
+                          quantity: item.stock_quantity || 0,
+                          product: { name: item.product_name }
+                        });
                       }
+                      setAdjustModalOpen(true);
                     }}
                   >
                     Adjust Stock
