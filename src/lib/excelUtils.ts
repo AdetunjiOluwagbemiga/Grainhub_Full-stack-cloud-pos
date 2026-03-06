@@ -173,11 +173,11 @@ export async function exportInventoryToExcel(inventory?: any[]) {
 
   if (inventory && inventory.length > 0) {
     data = inventory.map((item) => ({
-      SKU: item.product?.sku || '',
-      'Product Name': item.product?.name || '',
-      Location: item.location?.name || '',
-      Quantity: item.quantity || 0,
-      'Reorder Level': item.low_stock_threshold || 0,
+      SKU: item.product?.sku || item.sku || '',
+      'Product Name': item.product?.name || item.name || item.variant?.variant_name || '',
+      Location: item.location?.name || 'Unknown Location',
+      Quantity: Number(item.quantity) || 0,
+      'Reorder Level': Number(item.low_stock_threshold) || 0,
       'Reorder Quantity': 0,
     }));
   } else {

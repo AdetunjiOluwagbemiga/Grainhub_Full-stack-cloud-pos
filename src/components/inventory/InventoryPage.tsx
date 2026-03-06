@@ -234,7 +234,10 @@ export function InventoryPage() {
                     variant="secondary"
                     size="sm"
                     onClick={() => {
-                      const rawItem = rawInventory?.find(inv => inv.product_id === item.product_id);
+                      const rawItem = rawInventory?.find(inv =>
+                        inv.product_id === item.product_id &&
+                        (!inv.variant_id || inv.variant_id === item.variant_id)
+                      );
                       if (rawItem) {
                         setSelectedItem(rawItem);
                         setAdjustModalOpen(true);
