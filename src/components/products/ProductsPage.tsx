@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Plus, Search, Edit, Trash2, Barcode as BarcodeIcon, Download, Upload, FileDown } from 'lucide-react';
+import { Plus, Search, CreditCard as Edit, Trash2, Barcode as BarcodeIcon, Download, Upload, FileDown } from 'lucide-react';
 import { useProducts, useCreateProduct, useUpdateProduct, useGenerateBarcode, useDeleteProducts } from '../../hooks/useProducts';
 import { useCategories } from '../../hooks/useCategories';
 import { Button } from '../ui/Button';
