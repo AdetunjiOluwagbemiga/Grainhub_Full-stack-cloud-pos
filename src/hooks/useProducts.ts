@@ -168,3 +168,29 @@ export function useGenerateBarcode() {
     },
   });
 }
+
+export function useDeleteProducts() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (productIds: string[]) => {
+      const { data, error } = await supabase
+        .from('products')
+        .update({ is_active: false })
+        .in('id', productIds)
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (_, productIds) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      const count = productIds.length;
+      toast.success(`${count} product${count > 1 ? 's' : ''} deleted successfully`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to delete products');
+    },
+  });
+}

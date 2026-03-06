@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Plus, Search, Edit, Trash2, Barcode as BarcodeIcon, Download, Upload, FileDown } from 'lucide-react';
-import { useProducts, useCreateProduct, useUpdateProduct, useGenerateBarcode } from '../../hooks/useProducts';
+import { useProducts, useCreateProduct, useUpdateProduct, useGenerateBarcode, useDeleteProducts } from '../../hooks/useProducts';
 import { useCategories } from '../../hooks/useCategories';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -18,6 +18,7 @@ export function ProductsPage() {
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const generateBarcode = useGenerateBarcode();
+  const deleteProducts = useDeleteProducts();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -26,6 +27,8 @@ export function ProductsPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [importing, setImporting] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     sku: '',
@@ -178,6 +181,37 @@ export function ProductsPage() {
     toast.success('Template downloaded!');
   };
 
+  const toggleSelectProduct = (productId: string) => {
+    setSelectedProducts(prev =>
+      prev.includes(productId)
+        ? prev.filter(id => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedProducts.length === filteredProducts?.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(filteredProducts?.map(p => p.id) || []);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedProducts.length === 0) {
+      toast.error('No products selected');
+      return;
+    }
+
+    try {
+      await deleteProducts.mutateAsync(selectedProducts);
+      setSelectedProducts([]);
+      setDeleteModalOpen(false);
+    } catch (error) {
+      console.error('Error deleting products:', error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -190,8 +224,27 @@ export function ProductsPage() {
     <div className="h-full flex flex-col bg-gray-50">
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Products</h1>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Products</h1>
+            {selectedProducts.length > 0 && (
+              <p className="text-sm text-gray-600 mt-1">
+                {selectedProducts.length} product{selectedProducts.length > 1 ? 's' : ''} selected
+              </p>
+            )}
+          </div>
           <div className="flex flex-wrap gap-2">
+            {selectedProducts.length > 0 && (
+              <Button
+                variant="secondary"
+                onClick={() => setDeleteModalOpen(true)}
+                size="sm"
+                className="flex-1 sm:flex-none bg-red-50 text-red-600 hover:bg-red-100"
+              >
+                <Trash2 className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Delete Selected ({selectedProducts.length})</span>
+                <span className="sm:hidden">Delete ({selectedProducts.length})</span>
+              </Button>
+            )}
             <Button variant="secondary" onClick={handleDownloadTemplate} size="sm" className="flex-1 sm:flex-none">
               <FileDown className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Download Template</span>
@@ -227,15 +280,27 @@ export function ProductsPage() {
       <div className="p-4 sm:p-6">
         <Card className="mb-4 sm:mb-6">
           <CardContent className="p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <Input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+            <div className="flex items-center gap-3">
+              {filteredProducts && filteredProducts.length > 0 && (
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedProducts.length === filteredProducts.length}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                  />
+                </label>
+              )}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -244,7 +309,15 @@ export function ProductsPage() {
           {filteredProducts?.map((product) => (
             <Card key={product.id}>
               <CardContent className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <label className="flex items-center cursor-pointer mt-1">
+                    <input
+                      type="checkbox"
+                      checked={selectedProducts.includes(product.id)}
+                      onChange={() => toggleSelectProduct(product.id)}
+                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                  </label>
                   <div className="flex-1">
                     <h3 className="text-base sm:text-lg font-semibold text-gray-900">{product.name}</h3>
                     <p className="text-sm text-gray-600 mt-1">SKU: {product.sku}</p>
@@ -280,7 +353,6 @@ export function ProductsPage() {
                       </div>
                     )}
                   </div>
-
                   <div className="flex gap-2">
                     <Button
                       variant="ghost"
@@ -455,6 +527,38 @@ export function ProductsPage() {
                 setEditingProduct(null);
                 resetForm();
               }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        title="Delete Products"
+      >
+        <div className="space-y-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-sm text-red-800">
+              Are you sure you want to delete {selectedProducts.length} product{selectedProducts.length > 1 ? 's' : ''}?
+              This will mark them as inactive and they will no longer appear in the system.
+            </p>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              className="flex-1 bg-red-600 hover:bg-red-700"
+              onClick={handleDeleteSelected}
+              disabled={deleteProducts.isPending}
+            >
+              {deleteProducts.isPending ? 'Deleting...' : 'Delete Products'}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteModalOpen(false)}
+              disabled={deleteProducts.isPending}
             >
               Cancel
             </Button>
