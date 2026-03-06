@@ -5,6 +5,7 @@ export interface ProductExcelRow {
   SKU: string;
   Name: string;
   Description?: string;
+  'Current Stock': number;
   'Cost Price': number;
   'Retail Price': number;
   'Tax Rate (%)': number;
@@ -16,6 +17,7 @@ export async function exportProductsToExcel(products: any[]) {
     SKU: product.sku,
     Name: product.name,
     Description: product.description || '',
+    'Current Stock': product.current_stock || 0,
     'Cost Price': product.cost_price,
     'Retail Price': product.retail_price,
     'Tax Rate (%)': product.tax_rate,
@@ -28,6 +30,7 @@ export async function exportProductsToExcel(products: any[]) {
     { wch: 15 },
     { wch: 30 },
     { wch: 40 },
+    { wch: 15 },
     { wch: 12 },
     { wch: 12 },
     { wch: 12 },
@@ -133,6 +136,7 @@ export function downloadExcelTemplate() {
       SKU: 'EXAMPLE-001',
       Name: 'Example Product',
       Description: 'Product description',
+      'Current Stock': 0,
       'Cost Price': 10.00,
       'Retail Price': 20.00,
       'Tax Rate (%)': 15,
@@ -146,6 +150,7 @@ export function downloadExcelTemplate() {
     { wch: 15 },
     { wch: 30 },
     { wch: 40 },
+    { wch: 15 },
     { wch: 12 },
     { wch: 12 },
     { wch: 12 },

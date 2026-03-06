@@ -328,7 +328,11 @@ export function ProductsPage() {
                       <p className="text-sm text-gray-600 mt-2">{product.description}</p>
                     )}
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mt-4">
+                      <div>
+                        <span className="text-xs text-gray-500">Current Stock</span>
+                        <p className="font-medium text-blue-600">{product.current_stock || 0}</p>
+                      </div>
                       <div>
                         <span className="text-xs text-gray-500">Cost Price</span>
                         <p className="font-medium text-gray-900">{formatCurrency(product.cost_price)}</p>
