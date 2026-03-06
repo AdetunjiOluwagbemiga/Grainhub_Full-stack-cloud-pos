@@ -13,7 +13,7 @@ export function useSales(startDate?: string, endDate?: string) {
         .select(`
           *,
           customer:customers(*),
-          cashier:user_profiles(*),
+          cashier:user_profiles!sales_cashier_id_fkey(*),
           sale_items(*)
         `)
         .order('created_at', { ascending: false });
@@ -26,8 +26,11 @@ export function useSales(startDate?: string, endDate?: string) {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Sales query error:', error);
+        throw error;
+      }
+      return data || [];
     },
     staleTime: 0,
     refetchOnMount: true,
