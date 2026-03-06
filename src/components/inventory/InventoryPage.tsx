@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Package, AlertTriangle, Plus, Minus, Download, Upload, FileDown } from 'lucide-react';
 import { useInventory, useLowStockItems, useStockAdjustment } from '../../hooks/useInventory';
 import { useInventoryValuation } from '../../hooks/useValuation';
@@ -10,6 +10,7 @@ import { formatCurrency } from '../../lib/utils';
 import { exportInventoryToExcel, importInventoryFromExcel, downloadInventoryTemplate } from '../../lib/excelUtils';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { supabase } from '../../lib/supabase';
 
 export function InventoryPage() {
   const { data: rawInventory, isLoading: rawLoading } = useInventory();
@@ -18,6 +19,7 @@ export function InventoryPage() {
   const stockAdjustment = useStockAdjustment();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [defaultLocationId, setDefaultLocationId] = useState<string | null>(null);
 
   const isLoading = rawLoading || valuationLoading;
 
@@ -29,6 +31,22 @@ export function InventoryPage() {
     reason: 'correction',
     notes: '',
   });
+
+  useEffect(() => {
+    const fetchDefaultLocation = async () => {
+      const { data } = await supabase
+        .from('locations')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setDefaultLocationId(data.id);
+      }
+    };
+
+    fetchDefaultLocation();
+  }, []);
 
   const handleAdjustment = async () => {
     if (!selectedItem || !adjustment.quantity_change) {
@@ -77,13 +95,16 @@ export function InventoryPage() {
       return;
     }
 
-    const mainLocationId = 'eb23cc18-3aa6-4a73-9115-ed493974c5fa';
+    if (!defaultLocationId) {
+      toast.error('Location not found. Please try again.');
+      return;
+    }
 
     setImporting(true);
     const toastId = toast.loading('Importing inventory...');
 
     try {
-      const result = await importInventoryFromExcel(file, mainLocationId);
+      const result = await importInventoryFromExcel(file, defaultLocationId);
 
       await queryClient.invalidateQueries({ queryKey: ['inventory'] });
 
@@ -242,11 +263,14 @@ export function InventoryPage() {
                       if (rawItem) {
                         setSelectedItem(rawItem);
                       } else {
-                        const mainLocationId = 'eb23cc18-3aa6-4a73-9115-ed493974c5fa';
+                        if (!defaultLocationId) {
+                          toast.error('Location not found. Please refresh the page.');
+                          return;
+                        }
                         setSelectedItem({
                           product_id: item.product_id,
                           variant_id: item.variant_id || null,
-                          location_id: mainLocationId,
+                          location_id: defaultLocationId,
                           quantity: item.stock_quantity || 0,
                           product: { name: item.product_name }
                         });
