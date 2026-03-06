@@ -73,18 +73,51 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (product: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'margin_percentage'>) => {
-      const { data, error } = await supabase
+    mutationFn: async ({ productData, initialQuantity }: {
+      productData: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'margin_percentage'>,
+      initialQuantity: number
+    }) => {
+      const { data: product, error: productError } = await supabase
         .from('products')
-        .insert(product)
+        .insert(productData)
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (productError) throw productError;
+
+      if (initialQuantity > 0) {
+        const { data: locationData, error: locationError } = await supabase
+          .from('locations')
+          .select('id')
+          .eq('is_active', true)
+          .order('created_at')
+          .limit(1)
+          .maybeSingle();
+
+        if (locationError) throw locationError;
+
+        if (locationData) {
+          const { data: userData } = await supabase.auth.getUser();
+
+          const { error: adjustmentError } = await supabase.rpc('apply_stock_adjustment', {
+            p_location_id: locationData.id,
+            p_product_id: product.id,
+            p_variant_id: null,
+            p_quantity_change: initialQuantity,
+            p_reason: 'initial_stock',
+            p_notes: 'Initial stock quantity set during product creation',
+            p_adjusted_by: userData.user?.id || null
+          });
+
+          if (adjustmentError) throw adjustmentError;
+        }
+      }
+
+      return product;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['inventory'] });
       toast.success('Product created successfully');
     },
     onError: (error: Error) => {

@@ -43,6 +43,7 @@ export function ProductsPage() {
     category_id: '',
     is_weighed: false,
     is_quick_sale: false,
+    initial_quantity: '',
   });
 
   const filteredProducts = products?.filter(p =>
@@ -73,7 +74,8 @@ export function ProductsPage() {
           updates: productData,
         });
       } else {
-        await createProduct.mutateAsync(productData);
+        const initialQuantity = formData.initial_quantity ? parseFloat(formData.initial_quantity) : 0;
+        await createProduct.mutateAsync({ productData, initialQuantity });
       }
       setCreateModalOpen(false);
       setEditingProduct(null);
@@ -97,6 +99,7 @@ export function ProductsPage() {
       category_id: '',
       is_weighed: false,
       is_quick_sale: false,
+      initial_quantity: '',
     });
   };
 
@@ -489,6 +492,23 @@ export function ProductsPage() {
               </select>
             </div>
           </div>
+
+          {!editingProduct && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <Input
+                label="Initial Quantity (optional)"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.initial_quantity}
+                onChange={(e) => setFormData({ ...formData, initial_quantity: e.target.value })}
+                placeholder="0"
+              />
+              <p className="text-xs text-gray-600 mt-1">
+                Set the starting inventory quantity for this product
+              </p>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
