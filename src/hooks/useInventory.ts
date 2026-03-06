@@ -71,14 +71,30 @@ export function useUpdateInventory() {
       quantityChange: number;
       batchNumber?: string | null;
     }) => {
-      const { data: existing } = await supabase
+      let query = supabase
         .from('inventory')
         .select('*')
-        .eq('location_id', locationId)
-        .eq('product_id', productId || '')
-        .eq('variant_id', variantId || '')
-        .eq('batch_number', batchNumber || '')
-        .maybeSingle();
+        .eq('location_id', locationId);
+
+      if (productId) {
+        query = query.eq('product_id', productId);
+      } else {
+        query = query.is('product_id', null);
+      }
+
+      if (variantId) {
+        query = query.eq('variant_id', variantId);
+      } else {
+        query = query.is('variant_id', null);
+      }
+
+      if (batchNumber) {
+        query = query.eq('batch_number', batchNumber);
+      } else {
+        query = query.is('batch_number', null);
+      }
+
+      const { data: existing } = await query.maybeSingle();
 
       if (existing) {
         const newQuantity = Number(existing.quantity) + quantityChange;

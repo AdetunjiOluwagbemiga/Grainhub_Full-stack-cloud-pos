@@ -170,11 +170,10 @@ export function CheckoutModal({
       return;
     }
 
-    // TEMPORARILY DISABLED FOR TESTING - SHIFT REQUIREMENT
-    // if (!activeShift) {
-    //   toast.error('No active shift. Please open a shift before processing sales.');
-    //   return;
-    // }
+    if (!activeShift) {
+      toast.error('No active shift. Please open a shift before processing sales.');
+      return;
+    }
 
     setProcessing(true);
 
