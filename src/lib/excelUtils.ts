@@ -63,6 +63,17 @@ export async function importProductsFromExcel(
         const errors: string[] = [];
         let successCount = 0;
 
+        const { data: defaultLocation } = await supabase
+          .from('locations')
+          .select('id')
+          .eq('is_default', true)
+          .maybeSingle();
+
+        if (!defaultLocation) {
+          reject(new Error('No default location found. Please create a location first.'));
+          return;
+        }
+
         for (let i = 0; i < jsonData.length; i++) {
           const row = jsonData[i];
           const rowNum = i + 2;
@@ -95,6 +106,8 @@ export async function importProductsFromExcel(
               created_by: userId,
             };
 
+            let productId: string;
+
             if (existingProduct.data) {
               const { error } = await supabase
                 .from('products')
@@ -102,12 +115,33 @@ export async function importProductsFromExcel(
                 .eq('id', existingProduct.data.id);
 
               if (error) throw error;
+              productId = existingProduct.data.id;
             } else {
-              const { error } = await supabase
+              const { data: newProduct, error } = await supabase
                 .from('products')
-                .insert([productData]);
+                .insert([productData])
+                .select('id')
+                .single();
 
               if (error) throw error;
+              productId = newProduct.id;
+            }
+
+            const currentStock = row['Current Stock'] || 0;
+            if (currentStock > 0) {
+              const { data: existingInventory } = await supabase
+                .from('inventory')
+                .select('id, quantity')
+                .eq('product_id', productId)
+                .eq('location_id', defaultLocation.id)
+                .maybeSingle();
+
+              if (existingInventory) {
+                await supabase
+                  .from('inventory')
+                  .update({ quantity: currentStock })
+                  .eq('id', existingInventory.id);
+              }
             }
 
             successCount++;
