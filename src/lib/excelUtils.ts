@@ -127,21 +127,37 @@ export async function importProductsFromExcel(
               productId = newProduct.id;
             }
 
-            const currentStock = row['Current Stock'] || 0;
-            if (currentStock > 0) {
-              const { data: existingInventory } = await supabase
-                .from('inventory')
-                .select('id, quantity')
-                .eq('product_id', productId)
-                .eq('location_id', defaultLocation.id)
-                .maybeSingle();
+            // Update or create inventory record for the product
+            const currentStock = row['Current Stock'] !== undefined ? row['Current Stock'] : 0;
 
-              if (existingInventory) {
-                await supabase
-                  .from('inventory')
-                  .update({ quantity: currentStock })
-                  .eq('id', existingInventory.id);
-              }
+            const { data: existingInventory } = await supabase
+              .from('inventory')
+              .select('id, quantity')
+              .eq('product_id', productId)
+              .eq('location_id', defaultLocation.id)
+              .maybeSingle();
+
+            if (existingInventory) {
+              // Update existing inventory
+              const { error: invError } = await supabase
+                .from('inventory')
+                .update({ quantity: currentStock })
+                .eq('id', existingInventory.id);
+
+              if (invError) throw new Error(`Failed to update inventory: ${invError.message}`);
+            } else {
+              // Create new inventory record
+              const { error: invError } = await supabase
+                .from('inventory')
+                .insert([{
+                  product_id: productId,
+                  location_id: defaultLocation.id,
+                  quantity: currentStock,
+                  low_stock_threshold: 5,
+                  reorder_quantity: 10
+                }]);
+
+              if (invError) throw new Error(`Failed to create inventory: ${invError.message}`);
             }
 
             successCount++;
