@@ -4,11 +4,12 @@ import { useProducts, useProductByBarcode } from '../../hooks/useProducts';
 import { usePaymentMethods } from '../../hooks/useSales';
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
 import { useActiveShift } from '../../hooks/useShifts';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { CartItem } from '../../types/database';
-import { formatCurrency, calculateLineTotal } from '../../lib/utils';
+import { calculateLineTotal } from '../../lib/utils';
 import { CheckoutModal } from './CheckoutModal';
 import toast from 'react-hot-toast';
 
@@ -28,6 +29,7 @@ export function Register() {
 
   const { data: products, isLoading: productsLoading } = useProducts();
   const { data: scannedProduct } = useProductByBarcode(barcode);
+  const { formatCurrency } = useCurrency();
   const { data: paymentMethods } = usePaymentMethods();
   const { data: activeShift } = useActiveShift();
 

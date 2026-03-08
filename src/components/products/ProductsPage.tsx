@@ -6,13 +6,14 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Modal } from '../ui/Modal';
-import { formatCurrency } from '../../lib/utils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { exportProductsToExcel, importProductsFromExcel, downloadExcelTemplate } from '../../lib/excelUtils';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 
 export function ProductsPage() {
+  const { formatCurrency } = useCurrency();
   const { data: products, isLoading } = useProducts();
   const { data: categories } = useCategories();
   const createProduct = useCreateProduct();

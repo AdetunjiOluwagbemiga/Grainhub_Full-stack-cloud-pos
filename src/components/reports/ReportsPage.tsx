@@ -4,12 +4,14 @@ import { useSales } from '../../hooks/useSales';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Input } from '../ui/Input';
-import { formatCurrency, formatShortDate } from '../../lib/utils';
+import { useCurrency } from '../../contexts/CurrencyContext';
+import { formatShortDate } from '../../lib/utils';
 import { exportSalesToExcel } from '../../lib/excelUtils';
 import { ShiftReportsPage } from './ShiftReportsPage';
 import toast from 'react-hot-toast';
 
 export function ReportsPage() {
+  const { formatCurrency } = useCurrency();
   const [activeTab, setActiveTab] = useState<'sales' | 'shifts'>('sales');
 
   const getMonthStart = () => {

@@ -5,7 +5,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useCloseShift } from '../../hooks/useShifts';
 import { Shift } from '../../hooks/useShifts';
-import { formatCurrency } from '../../lib/utils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { format } from 'date-fns';
 
 interface CloseShiftModalProps {
@@ -15,6 +15,7 @@ interface CloseShiftModalProps {
 }
 
 export function CloseShiftModal({ isOpen, onClose, shift }: CloseShiftModalProps) {
+  const { formatCurrency } = useCurrency();
   const [actualCash, setActualCash] = useState('');
   const [notes, setNotes] = useState('');
   const [showZReport, setShowZReport] = useState(false);

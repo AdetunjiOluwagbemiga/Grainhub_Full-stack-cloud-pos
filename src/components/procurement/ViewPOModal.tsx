@@ -3,7 +3,7 @@ import { Package, CheckCircle, Printer } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { usePurchaseOrder, useUpdatePOStatus, useReceivePOItem } from '../../hooks/usePurchaseOrders';
-import { formatCurrency } from '../../lib/utils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { format } from 'date-fns';
 
 interface ViewPOModalProps {
@@ -13,6 +13,7 @@ interface ViewPOModalProps {
 }
 
 export function ViewPOModal({ isOpen, onClose, poId }: ViewPOModalProps) {
+  const { formatCurrency } = useCurrency();
   const { data: po, isLoading } = usePurchaseOrder(poId);
   const updateStatus = useUpdatePOStatus();
   const receiveItem = useReceivePOItem();

@@ -5,10 +5,11 @@ import { Button } from '../ui/Button';
 import { usePurchaseOrders } from '../../hooks/usePurchaseOrders';
 import { CreatePOModal } from './CreatePOModal';
 import { ViewPOModal } from './ViewPOModal';
-import { formatCurrency } from '../../lib/utils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { format } from 'date-fns';
 
 export function PurchaseOrdersPage() {
+  const { formatCurrency } = useCurrency();
   const { data: purchaseOrders, isLoading } = usePurchaseOrders();
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [viewingPO, setViewingPO] = useState<string | null>(null);

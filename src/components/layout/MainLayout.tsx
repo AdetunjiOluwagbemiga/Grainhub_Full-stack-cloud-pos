@@ -19,7 +19,7 @@ import { useActiveShift } from '../../hooks/useShifts';
 import { Button } from '../ui/Button';
 import { OpenShiftModal } from '../shift/OpenShiftModal';
 import { CloseShiftModal } from '../shift/CloseShiftModal';
-import { formatCurrency } from '../../lib/utils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { format } from 'date-fns';
 
 interface MainLayoutProps {
@@ -30,6 +30,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, activeTab, onTabChange }: MainLayoutProps) {
   const { profile, signOut } = useAuth();
+  const { formatCurrency } = useCurrency();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openShiftModalOpen, setOpenShiftModalOpen] = useState(false);
   const [closeShiftModalOpen, setCloseShiftModalOpen] = useState(false);

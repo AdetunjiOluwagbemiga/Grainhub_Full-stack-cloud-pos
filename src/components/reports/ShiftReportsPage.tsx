@@ -4,10 +4,11 @@ import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { useShiftHistory } from '../../hooks/useShifts';
 import { useAuth } from '../../contexts/AuthContext';
-import { formatCurrency } from '../../lib/utils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { format } from 'date-fns';
 
 export function ShiftReportsPage() {
+  const { formatCurrency } = useCurrency();
   const { profile } = useAuth();
   const [limit, setLimit] = useState(20);
   const { data: shifts, isLoading } = useShiftHistory(limit);

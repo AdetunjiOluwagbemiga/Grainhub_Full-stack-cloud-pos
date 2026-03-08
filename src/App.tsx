@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import { queryClient } from './lib/queryClient';
 import { LoginPage } from './components/auth/LoginPage';
 import { MainLayout } from './components/layout/MainLayout';
@@ -67,8 +68,10 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <AppContent />
-        <Toaster position="top-right" />
+        <CurrencyProvider>
+          <AppContent />
+          <Toaster position="top-right" />
+        </CurrencyProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

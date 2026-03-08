@@ -6,13 +6,14 @@ import { Button } from '../ui/Button';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
-import { formatCurrency } from '../../lib/utils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 import { exportInventoryToExcel, importInventoryFromExcel, downloadInventoryTemplate } from '../../lib/excelUtils';
 import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 
 export function InventoryPage() {
+  const { formatCurrency } = useCurrency();
   const { data: rawInventory, isLoading: rawLoading } = useInventory();
   const { data: groupedInventory, isLoading: valuationLoading } = useInventoryValuation();
   const { data: lowStock } = useLowStockItems();

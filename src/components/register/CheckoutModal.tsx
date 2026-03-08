@@ -8,7 +8,8 @@ import { useCreateSale, usePaymentMethods } from '../../hooks/useSales';
 import { useAuth } from '../../contexts/AuthContext';
 import { useActiveShift } from '../../hooks/useShifts';
 import { CartItem } from '../../types/database';
-import { formatCurrency, generateReceiptHTML, printReceipt, downloadReceipt } from '../../lib/utils';
+import { useCurrency } from '../../contexts/CurrencyContext';
+import { generateReceiptHTML, printReceipt, downloadReceipt } from '../../lib/utils';
 import toast from 'react-hot-toast';
 
 interface CheckoutModalProps {
@@ -38,6 +39,7 @@ export function CheckoutModal({
   total,
   onComplete,
 }: CheckoutModalProps) {
+  const { formatCurrency } = useCurrency();
   const { profile } = useAuth();
   const { data: allPaymentMethods } = usePaymentMethods();
   const { data: activeShift } = useActiveShift();

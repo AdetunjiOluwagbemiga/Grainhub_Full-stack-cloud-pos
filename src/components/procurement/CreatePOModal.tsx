@@ -7,7 +7,7 @@ import { useSuppliers } from '../../hooks/useSuppliers';
 import { useProducts } from '../../hooks/useProducts';
 import { useInventory } from '../../hooks/useInventory';
 import { useCreatePurchaseOrder, useLowStockProducts } from '../../hooks/usePurchaseOrders';
-import { formatCurrency } from '../../lib/utils';
+import { useCurrency } from '../../contexts/CurrencyContext';
 
 interface CreatePOModalProps {
   isOpen: boolean;
@@ -23,6 +23,7 @@ interface POLineItem {
 }
 
 export function CreatePOModal({ isOpen, onClose }: CreatePOModalProps) {
+  const { formatCurrency } = useCurrency();
   const { data: suppliers } = useSuppliers();
   const { data: products } = useProducts();
   const { data: inventory } = useInventory();
