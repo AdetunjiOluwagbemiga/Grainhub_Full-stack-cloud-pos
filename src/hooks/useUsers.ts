@@ -42,28 +42,30 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: async (userData: CreateUserData) => {
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: userData.email,
-        password: userData.password,
-        email_confirm: true,
-      });
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (authError) throw authError;
+      if (!session) {
+        throw new Error('No active session');
+      }
 
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert({
-          id: authData.user.id,
-          email: userData.email,
-          full_name: userData.full_name,
-          role: userData.role,
-          pin_code: userData.pin_code,
-          is_active: true,
-        });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(userData),
+        }
+      );
 
-      if (profileError) throw profileError;
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create user');
+      }
 
-      return authData.user;
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -131,11 +133,30 @@ export function useDeleteUser() {
 export function useResetPassword() {
   return useMutation({
     mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
-      const { error } = await supabase.auth.admin.updateUserById(userId, {
-        password: newPassword,
-      });
+      const { data: { session } } = await supabase.auth.getSession();
 
-      if (error) throw error;
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reset-password`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId, newPassword }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to reset password');
+      }
+
+      return await response.json();
     },
     onSuccess: () => {
       toast.success('Password reset successfully');
