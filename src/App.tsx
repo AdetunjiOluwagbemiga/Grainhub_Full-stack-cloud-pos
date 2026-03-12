@@ -13,6 +13,7 @@ import { ValuationDashboard } from './components/valuation/ValuationDashboard';
 import { SuppliersPage } from './components/suppliers/SuppliersPage';
 import { PurchaseOrdersPage } from './components/procurement/PurchaseOrdersPage';
 import { CustomersPage } from './components/customers/CustomersPage';
+import { UsersPage } from './components/users/UsersPage';
 import { ReportsPage } from './components/reports/ReportsPage';
 import { SettingsPage } from './components/settings/SettingsPage';
 
@@ -48,6 +49,8 @@ function AppContent() {
         return <PurchaseOrdersPage />;
       case 'customers':
         return <CustomersPage />;
+      case 'users':
+        return <UsersPage />;
       case 'reports':
         return <ReportsPage />;
       case 'settings':

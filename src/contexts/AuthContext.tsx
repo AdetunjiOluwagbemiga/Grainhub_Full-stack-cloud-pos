@@ -12,6 +12,9 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   signInWithPin: (pinCode: string) => Promise<void>;
   logActivity: (activityType: string, description: string, metadata?: Record<string, unknown>) => Promise<void>;
+  isAdmin: boolean;
+  isManager: boolean;
+  isCashier: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -113,6 +116,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const isAdmin = profile?.role === 'admin';
+  const isManager = profile?.role === 'manager';
+  const isCashier = profile?.role === 'cashier';
+
   const value = {
     user,
     profile,
@@ -122,6 +129,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     signInWithPin,
     logActivity,
+    isAdmin,
+    isManager,
+    isCashier,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -44,6 +44,7 @@ export function MainLayout({ children, activeTab, onTabChange }: MainLayoutProps
     { id: 'suppliers', name: 'Suppliers', icon: Truck, roles: ['admin', 'manager'] },
     { id: 'purchase-orders', name: 'Purchase Orders', icon: ShoppingBag, roles: ['admin', 'manager'] },
     { id: 'customers', name: 'Customers', icon: Users, roles: ['admin', 'manager', 'cashier'] },
+    { id: 'users', name: 'Users', icon: Users, roles: ['admin'] },
     { id: 'reports', name: 'Reports', icon: BarChart3, roles: ['admin', 'manager'] },
     { id: 'settings', name: 'Settings', icon: Settings, roles: ['admin'] },
   ];
