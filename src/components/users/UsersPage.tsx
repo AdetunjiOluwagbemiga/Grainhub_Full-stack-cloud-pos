@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, UserPlus, Edit2, Lock, Power } from 'lucide-react';
+import { Users, UserPlus, CreditCard as Edit2, Lock, Power } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { useUsers, useUpdateUser, useDeleteUser } from '../../hooks/useUsers';
