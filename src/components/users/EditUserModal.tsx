@@ -33,7 +33,7 @@ export function EditUserModal({ user, onClose }: EditUserModalProps) {
   };
 
   return (
-    <Modal onClose={onClose} title="Edit User">
+    <Modal isOpen={true} onClose={onClose} title="Edit User">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

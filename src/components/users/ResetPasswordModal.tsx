@@ -38,7 +38,7 @@ export function ResetPasswordModal({ user, onClose }: ResetPasswordModalProps) {
   };
 
   return (
-    <Modal onClose={onClose} title="Reset Password">
+    <Modal isOpen={true} onClose={onClose} title="Reset Password">
       <div className="mb-4">
         <p className="text-sm text-gray-600">
           Reset password for <span className="font-medium">{user.full_name}</span>

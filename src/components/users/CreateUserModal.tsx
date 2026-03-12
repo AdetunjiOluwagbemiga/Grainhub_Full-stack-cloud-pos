@@ -45,7 +45,7 @@ export function CreateUserModal({ onClose }: CreateUserModalProps) {
   };
 
   return (
-    <Modal onClose={onClose} title="Create New User">
+    <Modal isOpen={true} onClose={onClose} title="Create New User">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
