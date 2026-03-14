@@ -15,34 +15,66 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
   const { data: sale, isLoading, error, isFetching } = useSaleById(saleId);
   const { data: products } = useProducts();
 
-  console.log('Modal - saleId:', saleId, 'sale:', sale, 'isLoading:', isLoading, 'isFetching:', isFetching, 'error:', error);
+  console.log('=== SALE DETAILS MODAL ===');
+  console.log('saleId:', saleId);
+  console.log('isLoading:', isLoading);
+  console.log('isFetching:', isFetching);
+  console.log('error:', error);
+  console.log('sale:', sale);
+  console.log('products:', products);
+  console.log('=========================');
 
   // Show loading state while data is being fetched
-  if (isLoading || isFetching || !sale) {
+  if (isLoading || isFetching) {
     return (
       <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
         <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">
-            {error ? `Error: ${(error as Error).message}` : 'Loading...'}
-          </div>
+          <div className="text-gray-500">Loading sale details...</div>
+        </div>
+      </Modal>
+    );
+  }
+
+  if (error) {
+    return (
+      <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-red-500">Error: {(error as Error).message}</div>
+        </div>
+      </Modal>
+    );
+  }
+
+  if (!sale) {
+    return (
+      <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-gray-500">Sale not found</div>
         </div>
       </Modal>
     );
   }
 
   const getProductName = (productId: string, variantId: string | null) => {
-    const product = products?.find((p) => p.id === productId);
-    if (!product) return 'Unknown Product';
+    try {
+      const product = products?.find((p) => p.id === productId);
+      if (!product) return 'Unknown Product';
 
-    if (variantId && product.variants) {
-      const variant = product.variants.find((v) => v.id === variantId);
-      if (variant) return `${product.name} - ${variant.name}`;
+      if (variantId && product.variants) {
+        const variant = product.variants.find((v) => v.id === variantId);
+        if (variant) return `${product.name} - ${variant.name}`;
+      }
+
+      return product.name;
+    } catch (err) {
+      console.error('Error in getProductName:', err);
+      return 'Error loading product';
     }
-
-    return product.name;
   };
 
-  return (
+  // Wrap the entire render in try-catch
+  try {
+    return (
     <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
       <div className="space-y-6">
         {/* Header Info */}
@@ -253,5 +285,17 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
         </div>
       </div>
     </Modal>
-  );
+    );
+  } catch (renderError) {
+    console.error('Error rendering sale details:', renderError);
+    return (
+      <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-red-500">
+            Error displaying sale details. Check console for details.
+          </div>
+        </div>
+      </Modal>
+    );
+  }
 }
