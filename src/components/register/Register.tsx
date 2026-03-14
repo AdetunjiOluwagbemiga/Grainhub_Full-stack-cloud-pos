@@ -350,19 +350,16 @@ export function Register() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50">
-      <div className="bg-white/95 backdrop-blur-sm border-b border-gray-200/50 px-4 sm:px-6 py-4 shadow-md">
+    <div className="h-screen flex flex-col bg-gray-50">
+      <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">Point of Sale</h1>
-            <p className="text-sm text-gray-600 mt-0.5">Fast and efficient checkout</p>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Point of Sale</h1>
           <div className="flex items-center gap-2 sm:gap-4">
-            <Button variant="secondary" size="sm" className="hidden sm:flex shadow-md">
+            <Button variant="secondary" size="sm" className="hidden sm:flex">
               <User className="w-4 h-4 mr-2" />
               {selectedCustomer ? 'Customer Selected' : 'Select Customer'}
             </Button>
-            <Button variant="secondary" size="sm" className="sm:hidden shadow-md">
+            <Button variant="secondary" size="sm" className="sm:hidden">
               <User className="w-4 h-4" />
             </Button>
           </div>
@@ -372,14 +369,12 @@ export function Register() {
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         <div className="flex-1 p-4 sm:p-6 overflow-auto">
           {!activeShift && (
-            <div className="mb-4 bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 p-4 rounded-xl shadow-lg">
+            <div className="mb-4 bg-amber-50 border-l-4 border-amber-400 p-4 rounded">
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-500 rounded-lg">
-                  <AlertCircle className="w-5 h-5 text-white" />
-                </div>
+                <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
                 <div>
-                  <h3 className="text-sm font-bold text-amber-900">No Active Shift</h3>
-                  <p className="text-sm text-amber-700 mt-1.5 leading-relaxed">
+                  <h3 className="text-sm font-semibold text-amber-900">No Active Shift</h3>
+                  <p className="text-sm text-amber-700 mt-1">
                     You must open a shift before processing sales. Click "Open Shift" in the sidebar to get started.
                   </p>
                 </div>
@@ -387,8 +382,8 @@ export function Register() {
             </div>
           )}
 
-          <Card className="mb-4 hover:shadow-2xl">
-            <CardContent className="p-5">
+          <Card className="mb-4">
+            <CardContent className="p-4">
               <div className="flex gap-2 mb-3">
                 <div className="flex-1 relative">
                   <Scan className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -553,22 +548,20 @@ export function Register() {
           )}
 
           {cart.length === 0 ? (
-            <Card className="border-dashed border-2 hover:shadow-2xl">
-              <CardContent className="py-16 text-center">
-                <div className="p-6 bg-gray-100 rounded-full w-28 h-28 mx-auto mb-6 flex items-center justify-center">
-                  <ShoppingCart className="w-14 h-14 text-gray-400" />
-                </div>
-                <p className="text-gray-700 text-xl font-bold mb-2">Cart is empty</p>
-                <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">
-                  Scan a barcode or search for products to add to cart and start processing sales
+            <Card>
+              <CardContent className="py-12 text-center">
+                <ShoppingCart className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-600 text-lg">Cart is empty</p>
+                <p className="text-gray-500 text-sm mt-2">
+                  Scan a barcode or search for products to add to cart
                 </p>
               </CardContent>
             </Card>
           ) : (
             <>
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-xl p-4 mb-4 shadow-md">
-                <p className="text-sm text-blue-900">
-                  <strong className="font-bold">Tip:</strong> Click on quantity to edit, use +/- buttons, or click the trash icon to remove items
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+                <p className="text-sm text-blue-800">
+                  <strong>Tip:</strong> Click on quantity to edit, use +/- buttons, or click the trash icon to remove items
                 </p>
               </div>
               <div className="space-y-2">
@@ -709,9 +702,9 @@ export function Register() {
           )}
         </div>
 
-        <div className="w-full lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200/50 flex flex-col shadow-2xl">
-          <div className="p-4 sm:p-6 flex-1 bg-gradient-to-b from-white to-gray-50">
-            <h2 className="text-lg font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-5">Order Summary</h2>
+        <div className="w-full lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col">
+          <div className="p-4 sm:p-6 flex-1">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
 
             <div className="space-y-3">
               <div className="flex justify-between text-gray-600">
@@ -731,8 +724,8 @@ export function Register() {
                 <span>{formatCurrency(totalTax)}</span>
               </div>
 
-              <div className="pt-4 border-t-2 border-gray-300">
-                <div className="flex justify-between text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              <div className="pt-3 border-t border-gray-200">
+                <div className="flex justify-between text-xl font-bold text-gray-900">
                   <span>Total</span>
                   <span>{formatCurrency(total)}</span>
                 </div>
@@ -747,9 +740,9 @@ export function Register() {
             </div>
           </div>
 
-          <div className="p-4 sm:p-6 border-t-2 border-gray-200 space-y-3 bg-gradient-to-b from-gray-50 to-white">
+          <div className="p-4 sm:p-6 border-t border-gray-200 space-y-3">
             <Button
-              className="w-full transform hover:scale-[1.02] transition-all duration-200 shadow-lg hover:shadow-xl"
+              className="w-full"
               size="lg"
               onClick={handleCheckout}
               disabled={cart.length === 0}
@@ -759,7 +752,7 @@ export function Register() {
 
             <Button
               variant="secondary"
-              className="w-full shadow-md hover:shadow-lg"
+              className="w-full"
               onClick={clearCart}
               disabled={cart.length === 0}
             >
