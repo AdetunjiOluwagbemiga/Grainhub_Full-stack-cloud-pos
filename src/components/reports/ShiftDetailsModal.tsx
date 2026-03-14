@@ -3,9 +3,10 @@ import { X, User, DollarSign, TrendingUp, Clock, CreditCard } from 'lucide-react
 import { Modal } from '../ui/Modal';
 import { formatCurrency } from '../../lib/currency';
 import { useCurrency } from '../../contexts/CurrencyContext';
-import { useSales } from '../../hooks/useSales';
 import { useState } from 'react';
 import { SaleDetailsModal } from './SaleDetailsModal';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabase';
 
 interface ShiftDetailsModalProps {
   shift: any;
@@ -16,12 +17,26 @@ export function ShiftDetailsModal({ shift, onClose }: ShiftDetailsModalProps) {
   const { currency } = useCurrency();
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
 
-  const { data: sales } = useSales(
-    shift.start_time,
-    shift.end_time || new Date().toISOString()
-  );
+  const { data: shiftSales = [] } = useQuery({
+    queryKey: ['shift-sales', shift.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sales')
+        .select(`
+          *,
+          customer:customers(*),
+          cashier:user_profiles!sales_cashier_id_fkey(*),
+          sale_items(*),
+          payments(*, payment_method:payment_methods(*))
+        `)
+        .eq('shift_id', shift.id)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false });
 
-  const shiftSales = sales?.filter(sale => sale.shift_id === shift.id) || [];
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
   const totalSalesCount = shiftSales.length;
   const averageTransaction = totalSalesCount > 0 ? shift.total_sales / totalSalesCount : 0;
