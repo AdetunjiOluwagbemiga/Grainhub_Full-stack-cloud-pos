@@ -6,11 +6,13 @@ import { useShiftHistory } from '../../hooks/useShifts';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { format } from 'date-fns';
+import { ShiftDetailsModal } from './ShiftDetailsModal';
 
 export function ShiftReportsPage() {
   const { formatCurrency } = useCurrency();
   const { profile } = useAuth();
   const [limit, setLimit] = useState(20);
+  const [selectedShift, setSelectedShift] = useState<any>(null);
   const { data: shifts, isLoading } = useShiftHistory(limit);
 
   const isManager = profile?.role === 'admin' || profile?.role === 'manager';
@@ -45,7 +47,11 @@ export function ShiftReportsPage() {
             const isOver = variance > 0;
 
             return (
-              <Card key={shift.id}>
+              <Card
+                key={shift.id}
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => setSelectedShift(shift)}
+              >
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -183,6 +189,13 @@ export function ShiftReportsPage() {
             </div>
           )}
         </div>
+      )}
+
+      {selectedShift && (
+        <ShiftDetailsModal
+          shift={selectedShift}
+          onClose={() => setSelectedShift(null)}
+        />
       )}
     </div>
   );

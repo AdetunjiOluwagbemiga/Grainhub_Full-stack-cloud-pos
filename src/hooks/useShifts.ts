@@ -64,13 +64,16 @@ export function useShiftHistory(limit = 10) {
 
       const { data, error } = await supabase
         .from('shifts')
-        .select('*')
+        .select(`
+          *,
+          cashier:user_profiles!shifts_user_id_fkey(*)
+        `)
         .eq('user_id', user.id)
         .order('start_time', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
-      return data as Shift[];
+      return data;
     },
   });
 }
