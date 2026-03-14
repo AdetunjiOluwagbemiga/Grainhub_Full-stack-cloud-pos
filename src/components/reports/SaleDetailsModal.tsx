@@ -12,8 +12,10 @@ interface SaleDetailsModalProps {
 }
 
 export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
-  const { data: sale, isLoading } = useSaleById(saleId);
+  const { data: sale, isLoading, error } = useSaleById(saleId);
   const { data: products } = useProducts();
+
+  console.log('Modal - saleId:', saleId, 'sale:', sale, 'isLoading:', isLoading, 'error:', error);
 
   if (isLoading) {
     return (
@@ -25,11 +27,21 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
     );
   }
 
+  if (error) {
+    return (
+      <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-red-500">Error loading sale: {(error as Error).message}</div>
+        </div>
+      </Modal>
+    );
+  }
+
   if (!sale) {
     return (
       <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
         <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">Sale not found</div>
+          <div className="text-gray-500">Sale not found (ID: {saleId})</div>
         </div>
       </Modal>
     );

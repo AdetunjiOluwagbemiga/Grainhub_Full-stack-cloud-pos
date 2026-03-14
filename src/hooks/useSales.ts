@@ -48,14 +48,19 @@ export function useSaleById(saleId: string | null) {
         .select(`
           *,
           customer:customers(*),
-          cashier:user_profiles(*),
+          cashier:user_profiles!sales_cashier_id_fkey(*),
           sale_items(*),
           payments(*, payment_method:payment_methods(*))
         `)
         .eq('id', saleId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching sale:', error);
+        throw error;
+      }
+
+      console.log('Fetched sale data:', data);
       return data;
     },
     enabled: !!saleId,
