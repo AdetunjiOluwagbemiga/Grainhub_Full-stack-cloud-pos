@@ -17,7 +17,7 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
 
   console.log('Modal - saleId:', saleId, 'sale:', sale, 'isLoading:', isLoading, 'error:', error);
 
-  if (isLoading) {
+  if (isLoading || sale === undefined) {
     return (
       <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
         <div className="flex items-center justify-center py-12">
