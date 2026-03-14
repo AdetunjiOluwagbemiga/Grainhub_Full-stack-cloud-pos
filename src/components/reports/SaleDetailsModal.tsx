@@ -1,5 +1,4 @@
 import { X, User, Calendar, CreditCard, Package, DollarSign } from 'lucide-react';
-import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { useSaleById } from '../../hooks/useSales';
 import { useProducts } from '../../hooks/useProducts';
@@ -15,35 +14,67 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
   const { data: sale, isLoading, error } = useSaleById(saleId);
   const { data: products } = useProducts();
 
-  console.log('Modal - saleId:', saleId, 'sale:', sale, 'isLoading:', isLoading, 'error:', error);
+  if (!saleId) {
+    return null;
+  }
 
   if (isLoading) {
     return (
-      <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">Loading...</div>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <div className="text-gray-500">Loading sale details...</div>
+            </div>
+          </div>
         </div>
-      </Modal>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-red-500">Error loading sale: {(error as Error).message}</div>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="text-red-500 font-semibold mb-2">Error loading sale</div>
+              <div className="text-gray-600 text-sm">{(error as Error).message}</div>
+              <button
+                onClick={onClose}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
-      </Modal>
+      </div>
     );
   }
 
   if (!sale) {
     return (
-      <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">Sale not found (ID: {saleId})</div>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="text-gray-500 mb-4">Sale not found</div>
+              <div className="text-gray-400 text-sm mb-4">ID: {saleId}</div>
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
-      </Modal>
+      </div>
     );
   }
 
@@ -60,7 +91,19 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl max-h-[90vh] flex flex-col w-full max-w-4xl border border-gray-200/50 overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200/50 bg-gradient-to-r from-gray-50 to-white">
+          <h2 className="text-xl font-bold text-gray-900">Sale Details</h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-gray-500 hover:text-gray-700"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-5">
       <div className="space-y-6">
         {/* Header Info */}
         <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
@@ -261,6 +304,8 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
           <Button onClick={onClose}>Close</Button>
         </div>
       </div>
-    </Modal>
+        </div>
+      </div>
+    </div>
   );
 }

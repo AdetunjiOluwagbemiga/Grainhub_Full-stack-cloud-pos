@@ -7,7 +7,7 @@ export const Card = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
       <div
         ref={ref}
         className={cn(
-          'bg-white rounded-lg border border-gray-200 shadow-sm',
+          'bg-white rounded-xl border border-gray-200/60 shadow-lg shadow-gray-200/50 hover:shadow-xl hover:shadow-gray-300/50 transition-all duration-300',
           className
         )}
         {...props}
@@ -25,7 +25,7 @@ export const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
     return (
       <div
         ref={ref}
-        className={cn('px-6 py-4 border-b border-gray-200', className)}
+        className={cn('px-6 py-5 border-b border-gray-200/50 bg-gradient-to-r from-gray-50 to-white', className)}
         {...props}
       >
         {children}
