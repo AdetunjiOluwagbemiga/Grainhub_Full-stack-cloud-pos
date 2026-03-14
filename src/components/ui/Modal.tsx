@@ -26,15 +26,14 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black bg-opacity-50"
         onClick={onClose}
       />
       <div
         className={cn(
-          'relative bg-white rounded-2xl shadow-2xl max-h-[90vh] flex flex-col',
-          'animate-in zoom-in-95 duration-200 border border-gray-200/50',
+          'relative bg-white rounded-lg shadow-xl max-h-[90vh] flex flex-col',
           {
             'w-full max-w-md': size === 'sm',
             'w-full max-w-2xl': size === 'md',
@@ -44,17 +43,14 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         )}
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200/50 bg-gradient-to-r from-gray-50 to-white">
-            <h2 className="text-xl font-bold text-gray-900">{title}</h2>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 text-gray-500 hover:text-gray-700"
-            >
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+            <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
         )}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
           {children}
         </div>
       </div>
