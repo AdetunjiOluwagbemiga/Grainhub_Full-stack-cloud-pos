@@ -67,10 +67,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading profile:', error);
+        throw error;
+      }
+
+      if (!data) {
+        console.warn('No profile found for user:', userId);
+      } else {
+        console.log('Profile loaded successfully:', { id: data.id, role: data.role, email: data.email });
+      }
+
       setProfile(data);
     } catch (error) {
-      console.error('Error loading profile:', error);
+      console.error('Fatal error loading profile:', error);
       setProfile(null);
     } finally {
       setLoading(false);
