@@ -68,6 +68,26 @@ Deno.serve(async (req: Request) => {
 
     const { userId, newPassword } = await req.json();
 
+    if (!userId || !newPassword) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields: userId, newPassword' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    if (newPassword.length < 6) {
+      return new Response(
+        JSON.stringify({ error: 'Password must be at least 6 characters' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     const { error: resetError } = await supabaseClient.auth.admin.updateUserById(
       userId,
       { password: newPassword }

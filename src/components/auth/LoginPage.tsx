@@ -13,7 +13,6 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<'admin' | 'manager' | 'cashier'>('cashier');
   const [loading, setLoading] = useState(false);
 
   const handleSignIn = async (e: FormEvent) => {
@@ -49,7 +48,7 @@ export function LoginPage() {
             id: authData.user.id,
             email,
             full_name: fullName,
-            role,
+            role: 'cashier',
             is_active: true,
           });
 
@@ -118,22 +117,6 @@ export function LoginPage() {
               required
               autoComplete={isSignUp ? 'new-password' : 'current-password'}
             />
-            {isSignUp && (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Role
-                </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as 'admin' | 'manager' | 'cashier')}
-                  className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300 bg-white"
-                >
-                  <option value="admin">Admin (Full Access)</option>
-                  <option value="manager">Manager (Products & Reports)</option>
-                  <option value="cashier">Cashier (Register Only)</option>
-                </select>
-              </div>
-            )}
             <Button
               type="submit"
               className="w-full mt-6"

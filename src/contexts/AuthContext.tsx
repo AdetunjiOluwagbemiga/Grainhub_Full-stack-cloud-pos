@@ -85,18 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithPin = async (pinCode: string) => {
-    const { data: profiles, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('pin_code', pinCode)
-      .eq('is_active', true)
-      .maybeSingle();
-
-    if (error || !profiles) {
-      throw new Error('Invalid PIN code');
-    }
-
-    await logActivity('login', 'User logged in via PIN', { userId: profiles.id });
+    throw new Error('PIN authentication is not supported. Please use email and password.');
   };
 
   const signOut = async () => {
