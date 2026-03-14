@@ -62,18 +62,29 @@ export function useShiftHistory(limit = 10) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data, error } = await supabase
+      const { data: shifts, error } = await supabase
         .from('shifts')
-        .select(`
-          *,
-          cashier:user_profiles!shifts_user_id_fkey(*)
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('start_time', { ascending: false })
         .limit(limit);
 
       if (error) throw error;
-      return data;
+
+      if (!shifts || shifts.length === 0) return [];
+
+      const userIds = [...new Set(shifts.map(s => s.user_id))];
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .in('id', userIds);
+
+      const profileMap = new Map(profiles?.map(p => [p.id, p]) || []);
+
+      return shifts.map(shift => ({
+        ...shift,
+        cashier: profileMap.get(shift.user_id)
+      }));
     },
   });
 }
