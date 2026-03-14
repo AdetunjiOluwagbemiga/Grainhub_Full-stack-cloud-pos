@@ -19,10 +19,16 @@ export function useSales(startDate?: string, endDate?: string) {
         .order('created_at', { ascending: false });
 
       if (startDate) {
-        query = query.gte('created_at', `${startDate}T00:00:00.000Z`);
+        const formattedStart = typeof startDate === 'string' && startDate.includes('T')
+          ? startDate
+          : `${startDate}T00:00:00.000Z`;
+        query = query.gte('created_at', formattedStart);
       }
       if (endDate) {
-        query = query.lte('created_at', `${endDate}T23:59:59.999Z`);
+        const formattedEnd = typeof endDate === 'string' && endDate.includes('T')
+          ? endDate
+          : `${endDate}T23:59:59.999Z`;
+        query = query.lte('created_at', formattedEnd);
       }
 
       const { data, error } = await query;

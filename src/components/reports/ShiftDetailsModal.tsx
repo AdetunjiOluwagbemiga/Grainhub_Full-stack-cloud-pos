@@ -16,10 +16,10 @@ export function ShiftDetailsModal({ shift, onClose }: ShiftDetailsModalProps) {
   const { currency } = useCurrency();
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
 
-  const { data: sales } = useSales({
-    startDate: shift.start_time,
-    endDate: shift.end_time || new Date().toISOString(),
-  });
+  const { data: sales } = useSales(
+    shift.start_time,
+    shift.end_time || new Date().toISOString()
+  );
 
   const shiftSales = sales?.filter(sale => sale.shift_id === shift.id) || [];
 
