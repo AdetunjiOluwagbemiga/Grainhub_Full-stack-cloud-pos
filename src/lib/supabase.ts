@@ -12,5 +12,8 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    storage: window.localStorage,
+    storageKey: 'pos-auth-token',
+    detectSessionInUrl: false,
   },
 });
