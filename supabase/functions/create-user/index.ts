@@ -68,57 +68,6 @@ Deno.serve(async (req: Request) => {
 
     const { email, password, full_name, role, pin_code } = await req.json();
 
-    if (!email || !password || !full_name || !role) {
-      return new Response(
-        JSON.stringify({ error: 'Missing required fields: email, password, full_name, role' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid email format' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    if (password.length < 6) {
-      return new Response(
-        JSON.stringify({ error: 'Password must be at least 6 characters' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    if (!['admin', 'manager', 'cashier'].includes(role)) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid role. Must be admin, manager, or cashier' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
-    if (pin_code && !/^\d{4,6}$/.test(pin_code)) {
-      return new Response(
-        JSON.stringify({ error: 'PIN code must be 4-6 digits' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
-
     const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
       email,
       password,

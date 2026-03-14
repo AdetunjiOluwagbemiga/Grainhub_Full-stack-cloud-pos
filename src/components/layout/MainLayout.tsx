@@ -49,16 +49,9 @@ export function MainLayout({ children, activeTab, onTabChange }: MainLayoutProps
     { id: 'settings', name: 'Settings', icon: Settings, roles: ['admin'] },
   ];
 
-  const userRole = profile?.role || 'cashier';
-
-  console.log('MainLayout - Profile:', profile);
-  console.log('MainLayout - User Role:', userRole);
-
   const filteredNavigation = navigation.filter(item =>
-    item.roles.includes(userRole)
+    item.roles.includes(profile?.role || 'cashier')
   );
-
-  console.log('MainLayout - Filtered Navigation:', filteredNavigation.map(n => n.name));
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">

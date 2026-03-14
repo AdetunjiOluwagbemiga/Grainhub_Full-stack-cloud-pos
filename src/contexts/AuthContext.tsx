@@ -67,20 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error loading profile:', error);
-        throw error;
-      }
-
-      if (!data) {
-        console.warn('No profile found for user:', userId);
-      } else {
-        console.log('Profile loaded successfully:', { id: data.id, role: data.role, email: data.email });
-      }
-
+      if (error) throw error;
       setProfile(data);
     } catch (error) {
-      console.error('Fatal error loading profile:', error);
+      console.error('Error loading profile:', error);
       setProfile(null);
     } finally {
       setLoading(false);
@@ -95,7 +85,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithPin = async (pinCode: string) => {
-    throw new Error('PIN authentication is not supported. Please use email and password.');
+    const { data: profiles, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('pin_code', pinCode)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (error || !profiles) {
+      throw new Error('Invalid PIN code');
+    }
+
+    await logActivity('login', 'User logged in via PIN', { userId: profiles.id });
   };
 
   const signOut = async () => {
