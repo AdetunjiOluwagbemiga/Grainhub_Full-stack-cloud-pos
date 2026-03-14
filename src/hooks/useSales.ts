@@ -70,7 +70,7 @@ export function useSaleById(saleId: string | null) {
       return data;
     },
     enabled: !!saleId,
-    placeholderData: null,
+    staleTime: 30000,
   });
 }
 

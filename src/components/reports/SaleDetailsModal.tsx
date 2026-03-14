@@ -12,36 +12,19 @@ interface SaleDetailsModalProps {
 }
 
 export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
-  const { data: sale, isLoading, error } = useSaleById(saleId);
+  const { data: sale, isLoading, error, isFetching } = useSaleById(saleId);
   const { data: products } = useProducts();
 
-  console.log('Modal - saleId:', saleId, 'sale:', sale, 'isLoading:', isLoading, 'error:', error);
+  console.log('Modal - saleId:', saleId, 'sale:', sale, 'isLoading:', isLoading, 'isFetching:', isFetching, 'error:', error);
 
-  if (isLoading || sale === undefined) {
+  // Show loading state while data is being fetched
+  if (isLoading || isFetching || !sale) {
     return (
       <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
         <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">Loading...</div>
-        </div>
-      </Modal>
-    );
-  }
-
-  if (error) {
-    return (
-      <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-red-500">Error loading sale: {(error as Error).message}</div>
-        </div>
-      </Modal>
-    );
-  }
-
-  if (!sale) {
-    return (
-      <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">Sale not found (ID: {saleId})</div>
+          <div className="text-gray-500">
+            {error ? `Error: ${(error as Error).message}` : 'Loading...'}
+          </div>
         </div>
       </Modal>
     );
@@ -66,7 +49,7 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
         <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
           <div>
             <div className="text-sm text-gray-500">Sale Number</div>
-            <div className="font-semibold text-gray-900">{sale.sale_number}</div>
+            <div className="font-semibold text-gray-900">{sale.sale_number || 'N/A'}</div>
           </div>
           <div>
             <div className="text-sm text-gray-500">Status</div>
@@ -80,7 +63,7 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
                     : 'bg-yellow-100 text-yellow-800'
                 }`}
               >
-                {sale.status}
+                {sale.status || 'unknown'}
               </span>
             </div>
           </div>
@@ -90,7 +73,7 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
               Date & Time
             </div>
             <div className="font-medium text-gray-900">
-              {format(new Date(sale.created_at), 'MMM dd, yyyy hh:mm a')}
+              {sale.created_at ? format(new Date(sale.created_at), 'MMM dd, yyyy hh:mm a') : 'N/A'}
             </div>
           </div>
           <div>
@@ -157,25 +140,33 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {sale.sale_items.map((item: any) => (
-                  <tr key={item.id}>
-                    <td className="px-4 py-3 text-sm text-gray-900">
-                      {getProductName(item.product_id, item.variant_id)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                      {item.quantity}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                      {formatCurrency(item.unit_price)}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                      {item.discount_amount > 0 ? formatCurrency(item.discount_amount) : '-'}
-                    </td>
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">
-                      {formatCurrency(item.line_total)}
+                {sale.sale_items && sale.sale_items.length > 0 ? (
+                  sale.sale_items.map((item: any) => (
+                    <tr key={item.id}>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {getProductName(item.product_id, item.variant_id)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                        {item.quantity}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                        {formatCurrency(item.unit_price)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                        {item.discount_amount > 0 ? formatCurrency(item.discount_amount) : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">
+                        {formatCurrency(item.line_total)}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-3 text-sm text-gray-500 text-center">
+                      No items found
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -207,26 +198,26 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
         <div className="border-t pt-4 space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Subtotal</span>
-            <span className="font-medium">{formatCurrency(sale.subtotal)}</span>
+            <span className="font-medium">{formatCurrency(sale.subtotal || 0)}</span>
           </div>
-          {sale.discount_amount > 0 && (
+          {(sale.discount_amount || 0) > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Discount</span>
               <span className="font-medium text-red-600">
-                -{formatCurrency(sale.discount_amount)}
+                -{formatCurrency(sale.discount_amount || 0)}
               </span>
             </div>
           )}
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Tax</span>
-            <span className="font-medium">{formatCurrency(sale.tax_amount)}</span>
+            <span className="font-medium">{formatCurrency(sale.tax_amount || 0)}</span>
           </div>
           <div className="flex justify-between text-lg font-semibold border-t pt-2">
             <span className="flex items-center gap-2">
               <DollarSign className="w-5 h-5" />
               Total
             </span>
-            <span>{formatCurrency(sale.total_amount)}</span>
+            <span>{formatCurrency(sale.total_amount || 0)}</span>
           </div>
         </div>
 
