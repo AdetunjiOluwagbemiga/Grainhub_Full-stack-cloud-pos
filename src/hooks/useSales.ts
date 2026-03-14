@@ -49,28 +49,35 @@ export function useSaleById(saleId: string | null) {
     queryFn: async () => {
       if (!saleId) return null;
 
-      const { data, error } = await supabase
-        .from('sales')
-        .select(`
-          *,
-          customer:customers(*),
-          cashier:user_profiles!sales_cashier_id_fkey(*),
-          sale_items(*),
-          payments(*, payment_method:payment_methods(*))
-        `)
-        .eq('id', saleId)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from('sales')
+          .select(`
+            *,
+            customer:customers(*),
+            cashier:user_profiles!sales_cashier_id_fkey(*),
+            sale_items(*),
+            payments(*, payment_method:payment_methods(*))
+          `)
+          .eq('id', saleId)
+          .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching sale:', error);
-        throw error;
+        if (error) {
+          console.error('Error fetching sale:', error);
+          throw new Error(`Failed to fetch sale: ${error.message}`);
+        }
+
+        console.log('Fetched sale data:', data);
+        return data;
+      } catch (err) {
+        console.error('Network error fetching sale:', err);
+        throw new Error('Network error: Unable to fetch sale details. Please check your connection.');
       }
-
-      console.log('Fetched sale data:', data);
-      return data;
     },
     enabled: !!saleId,
     staleTime: 30000,
+    retry: 2,
+    retryDelay: 1000,
   });
 }
 

@@ -12,7 +12,7 @@ interface SaleDetailsModalProps {
 }
 
 export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
-  const { data: sale, isLoading, error, isFetching } = useSaleById(saleId);
+  const { data: sale, isLoading, error, isFetching, refetch } = useSaleById(saleId);
   const { data: products } = useProducts();
 
   console.log('=== SALE DETAILS MODAL ===');
@@ -28,7 +28,8 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
   if (isLoading || isFetching) {
     return (
       <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
-        <div className="flex items-center justify-center py-12">
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           <div className="text-gray-500">Loading sale details...</div>
         </div>
       </Modal>
@@ -38,8 +39,15 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
   if (error) {
     return (
       <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-red-500">Error: {(error as Error).message}</div>
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
+          <div className="text-red-500 text-center max-w-md">
+            <div className="font-semibold mb-2">Unable to load sale details</div>
+            <div className="text-sm">{(error as Error).message}</div>
+          </div>
+          <div className="flex gap-3">
+            <Button onClick={() => refetch()}>Retry</Button>
+            <Button onClick={onClose} variant="secondary">Close</Button>
+          </div>
         </div>
       </Modal>
     );
@@ -48,8 +56,9 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
   if (!sale) {
     return (
       <Modal isOpen={true} onClose={onClose} title="Sale Details" size="lg">
-        <div className="flex items-center justify-center py-12">
+        <div className="flex flex-col items-center justify-center py-12 gap-4">
           <div className="text-gray-500">Sale not found</div>
+          <Button onClick={onClose}>Close</Button>
         </div>
       </Modal>
     );
