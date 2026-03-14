@@ -8,11 +8,13 @@ import { useCurrency } from '../../contexts/CurrencyContext';
 import { formatShortDate } from '../../lib/utils';
 import { exportSalesToExcel } from '../../lib/excelUtils';
 import { ShiftReportsPage } from './ShiftReportsPage';
+import { SaleDetailsModal } from './SaleDetailsModal';
 import toast from 'react-hot-toast';
 
 export function ReportsPage() {
   const { formatCurrency } = useCurrency();
   const [activeTab, setActiveTab] = useState<'sales' | 'shifts'>('sales');
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
 
   const getMonthStart = () => {
     const date = new Date();
@@ -271,8 +273,12 @@ export function ReportsPage() {
                 </thead>
                 <tbody>
                   {completedSales.slice(0, 20).map((sale) => (
-                    <tr key={sale.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-3 px-4 text-sm text-gray-900">{sale.sale_number}</td>
+                    <tr
+                      key={sale.id}
+                      className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
+                      onClick={() => setSelectedSaleId(sale.id)}
+                    >
+                      <td className="py-3 px-4 text-sm text-gray-900 font-medium">{sale.sale_number}</td>
                       <td className="py-3 px-4 text-sm text-gray-600">
                         {formatShortDate(sale.created_at)}
                       </td>
@@ -310,6 +316,13 @@ export function ReportsPage() {
           </CardContent>
         </Card>
         </div>
+      )}
+
+      {selectedSaleId && (
+        <SaleDetailsModal
+          saleId={selectedSaleId}
+          onClose={() => setSelectedSaleId(null)}
+        />
       )}
     </div>
   );
