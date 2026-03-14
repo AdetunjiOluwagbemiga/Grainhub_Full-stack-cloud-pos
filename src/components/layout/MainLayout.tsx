@@ -51,14 +51,18 @@ export function MainLayout({ children, activeTab, onTabChange }: MainLayoutProps
 
   const userRole = profile?.role || 'cashier';
 
-  console.log('MainLayout - Profile:', profile);
-  console.log('MainLayout - User Role:', userRole);
+  console.log('🔍 MainLayout Debug Info:');
+  console.log('- Profile:', profile);
+  console.log('- User Role:', userRole);
+  console.log('- Is Admin:', profile?.role === 'admin');
+  console.log('- Profile Role (raw):', profile?.role);
 
   const filteredNavigation = navigation.filter(item =>
     item.roles.includes(userRole)
   );
 
-  console.log('MainLayout - Filtered Navigation:', filteredNavigation.map(n => n.name));
+  console.log('- Available Navigation Items:', filteredNavigation.map(n => n.name));
+  console.log('- Total items shown:', filteredNavigation.length);
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-gray-50 to-gray-100">

@@ -61,6 +61,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loadProfile = async (userId: string) => {
     try {
+      console.log('Loading profile for user ID:', userId);
+
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
@@ -74,8 +76,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!data) {
         console.warn('No profile found for user:', userId);
+        console.warn('This might be a data sync issue. Check if user_profiles has an entry for this user ID.');
       } else {
-        console.log('Profile loaded successfully:', { id: data.id, role: data.role, email: data.email });
+        console.log('✅ Profile loaded successfully:', {
+          id: data.id,
+          role: data.role,
+          email: data.email,
+          full_name: data.full_name
+        });
       }
 
       setProfile(data);
