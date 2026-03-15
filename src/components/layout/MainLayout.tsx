@@ -76,12 +76,7 @@ export function MainLayout({ children, activeTab, onTabChange }: MainLayoutProps
       )}
 
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm flex items-center justify-between px-4 z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-            <DollarSign className="w-5 h-5 text-white" />
-          </div>
-          <h1 className="text-xl font-bold text-gray-900">Teefoods & Grainhub</h1>
-        </div>
+        <h1 className="text-lg font-bold text-gray-900 py-2">Teefoods and Grainhub</h1>
         <div className="flex items-center gap-2">
           {activeShift && (
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold shadow-sm">
@@ -105,13 +100,10 @@ export function MainLayout({ children, activeTab, onTabChange }: MainLayoutProps
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-30 w-72 lg:w-72 bg-white border-r border-gray-200 shadow-xl transition-transform duration-300 flex flex-col`}
       >
-        <div className="h-16 flex items-center justify-between px-5 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <DollarSign className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-white">Teefoods & Grainhub</h1>
-          </div>
+        <div className="h-auto flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700">
+          <h1 className="text-xl font-bold text-white leading-relaxed">
+            Teefoods and Grainhub
+          </h1>
           <Button
             variant="ghost"
             size="sm"

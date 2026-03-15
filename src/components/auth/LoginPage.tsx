@@ -71,16 +71,9 @@ export function LoginPage() {
 
       <Card className="w-full max-w-md relative z-10 backdrop-blur-sm bg-white/95">
         <CardHeader className="text-center pb-6">
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center shadow-lg transform transition-transform hover:scale-105">
-              {isSignUp ? (
-                <UserPlus className="w-10 h-10 text-white" />
-              ) : (
-                <LogIn className="w-10 h-10 text-white" />
-              )}
-            </div>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Teefoods and Grainhub</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-3 mt-2 leading-relaxed">
+            Teefoods and Grainhub
+          </h1>
           <p className="text-gray-600 text-base">
             {isSignUp ? 'Create your account to get started' : 'Welcome back! Sign in to continue'}
           </p>
