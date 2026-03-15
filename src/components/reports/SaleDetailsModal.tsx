@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { X, User, Calendar, CreditCard, Package, DollarSign, AlertTriangle } from 'lucide-react';
+import { X, User, Calendar, CreditCard, Package, DollarSign, AlertTriangle, Trash2 } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { useSaleById } from '../../hooks/useSales';
+import { useSaleById, useDeleteSale } from '../../hooks/useSales';
 import { useProducts } from '../../hooks/useProducts';
 import { formatCurrency } from '../../lib/currency';
 import { format } from 'date-fns';
@@ -19,7 +19,9 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
   const { data: sale, isLoading, error, refetch } = useSaleById(saleId);
   const { data: products } = useProducts();
   const { user } = useAuth();
+  const deleteSale = useDeleteSale();
   const [showVoidConfirm, setShowVoidConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [voidReason, setVoidReason] = useState('');
   const [isVoiding, setIsVoiding] = useState(false);
 
@@ -97,6 +99,16 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
       toast.error(error.message || 'Failed to void sale');
     } finally {
       setIsVoiding(false);
+    }
+  };
+
+  const handleDeleteSale = async () => {
+    try {
+      await deleteSale.mutateAsync(saleId);
+      setShowDeleteConfirm(false);
+      onClose();
+    } catch (error: any) {
+      console.error('Error deleting sale:', error);
     }
   };
 
@@ -299,7 +311,7 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
 
         {/* Footer Actions */}
         <div className="flex justify-between items-center pt-4 border-t">
-          <div>
+          <div className="flex gap-2">
             {isAdmin && sale.status === 'completed' && !sale.is_voided && (
               <Button
                 variant="outline"
@@ -308,6 +320,16 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
               >
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 Void Sale
+              </Button>
+            )}
+            {isAdmin && (
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="border-red-500 text-red-800 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete
               </Button>
             )}
           </div>
@@ -363,6 +385,52 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
                 className="bg-red-600 hover:bg-red-700 text-white"
               >
                 {isVoiding ? 'Voiding...' : 'Void Sale'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Delete Sale Permanently</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  This will permanently delete sale #{sale.sale_number} and all related data.
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded p-3 space-y-1">
+                  <p className="text-sm font-semibold text-red-800">This action will:</p>
+                  <ul className="text-xs text-red-700 space-y-1 ml-4 list-disc">
+                    <li>Remove all sale records and items</li>
+                    <li>Reverse inventory changes</li>
+                    <li>Adjust shift totals and reports</li>
+                    <li>Update customer statistics</li>
+                    <li>Cannot be undone</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleteSale.isPending}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDeleteSale}
+                disabled={deleteSale.isPending}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {deleteSale.isPending ? 'Deleting...' : 'Delete Permanently'}
               </Button>
             </div>
           </div>
