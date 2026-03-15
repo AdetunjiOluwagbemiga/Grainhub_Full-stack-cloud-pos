@@ -64,14 +64,25 @@ export function DataManagementPage() {
           total_amount,
           payment_method,
           status,
-          customer:customers(name)
+          customer_id,
+          customers!sales_customer_id_fkey(name)
         `)
         .order('created_at', { ascending: false })
         .limit(100);
 
       if (error) throw error;
-      setSales(data || []);
-      setFilteredSales(data || []);
+
+      const formattedData = data?.map(sale => ({
+        id: sale.id,
+        created_at: sale.created_at,
+        total_amount: sale.total_amount,
+        payment_method: sale.payment_method,
+        status: sale.status,
+        customer: sale.customers ? { name: sale.customers.name } : undefined
+      })) || [];
+
+      setSales(formattedData);
+      setFilteredSales(formattedData);
     } catch (error: any) {
       console.error('Error loading sales:', error);
       toast.error('Failed to load sales');
