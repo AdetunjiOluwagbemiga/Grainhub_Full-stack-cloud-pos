@@ -13,6 +13,7 @@ import {
   Truck,
   ShoppingBag,
   PieChart,
+  Database,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useActiveShift } from '../../hooks/useShifts';
@@ -46,6 +47,7 @@ export function MainLayout({ children, activeTab, onTabChange }: MainLayoutProps
     { id: 'customers', name: 'Customers', icon: Users, roles: ['admin', 'manager', 'cashier'] },
     { id: 'users', name: 'Users', icon: Users, roles: ['admin'] },
     { id: 'reports', name: 'Reports', icon: BarChart3, roles: ['admin', 'manager'] },
+    { id: 'data-management', name: 'Data Management', icon: Database, roles: ['admin'] },
     { id: 'settings', name: 'Settings', icon: Settings, roles: ['admin'] },
   ];
 

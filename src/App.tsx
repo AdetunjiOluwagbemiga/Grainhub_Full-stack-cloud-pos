@@ -15,6 +15,7 @@ import { PurchaseOrdersPage } from './components/procurement/PurchaseOrdersPage'
 import { CustomersPage } from './components/customers/CustomersPage';
 import { UsersPage } from './components/users/UsersPage';
 import { ReportsPage } from './components/reports/ReportsPage';
+import { DataManagementPage } from './components/admin/DataManagementPage';
 import { SettingsPage } from './components/settings/SettingsPage';
 
 function AppContent() {
@@ -59,6 +60,8 @@ function AppContent() {
         return <UsersPage />;
       case 'reports':
         return <ReportsPage />;
+      case 'data-management':
+        return <DataManagementPage />;
       case 'settings':
         return <SettingsPage />;
       default:

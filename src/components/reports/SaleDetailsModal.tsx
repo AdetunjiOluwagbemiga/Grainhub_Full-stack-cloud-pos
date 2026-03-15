@@ -1,10 +1,14 @@
-import { X, User, Calendar, CreditCard, Package, DollarSign } from 'lucide-react';
+import { useState } from 'react';
+import { X, User, Calendar, CreditCard, Package, DollarSign, AlertTriangle } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { useSaleById } from '../../hooks/useSales';
 import { useProducts } from '../../hooks/useProducts';
 import { formatCurrency } from '../../lib/currency';
 import { format } from 'date-fns';
+import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 interface SaleDetailsModalProps {
   saleId: string;
@@ -12,8 +16,14 @@ interface SaleDetailsModalProps {
 }
 
 export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
-  const { data: sale, isLoading, error } = useSaleById(saleId);
+  const { data: sale, isLoading, error, refetch } = useSaleById(saleId);
   const { data: products } = useProducts();
+  const { user } = useAuth();
+  const [showVoidConfirm, setShowVoidConfirm] = useState(false);
+  const [voidReason, setVoidReason] = useState('');
+  const [isVoiding, setIsVoiding] = useState(false);
+
+  const isAdmin = user?.role === 'admin';
 
   console.log('Modal - saleId:', saleId, 'sale:', sale, 'isLoading:', isLoading, 'error:', error);
 
@@ -57,6 +67,37 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
     }
 
     return product.name;
+  };
+
+  const handleVoidSale = async () => {
+    if (!voidReason.trim()) {
+      toast.error('Please provide a reason for voiding this sale');
+      return;
+    }
+
+    setIsVoiding(true);
+    try {
+      const { data, error } = await supabase.rpc('void_sale', {
+        p_sale_id: saleId,
+        p_reason: voidReason,
+      });
+
+      if (error) throw error;
+
+      if (data?.success) {
+        toast.success('Sale voided successfully');
+        await refetch();
+        setShowVoidConfirm(false);
+        setVoidReason('');
+      } else {
+        toast.error(data?.error || 'Failed to void sale');
+      }
+    } catch (error: any) {
+      console.error('Error voiding sale:', error);
+      toast.error(error.message || 'Failed to void sale');
+    } finally {
+      setIsVoiding(false);
+    }
   };
 
   return (
@@ -257,10 +298,76 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
         )}
 
         {/* Footer Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-between items-center pt-4 border-t">
+          <div>
+            {isAdmin && sale.status === 'completed' && !sale.is_voided && (
+              <Button
+                variant="outline"
+                onClick={() => setShowVoidConfirm(true)}
+                className="border-red-300 text-red-700 hover:bg-red-50"
+              >
+                <AlertTriangle className="w-4 h-4 mr-2" />
+                Void Sale
+              </Button>
+            )}
+          </div>
           <Button onClick={onClose}>Close</Button>
         </div>
       </div>
+
+      {/* Void Confirmation Modal */}
+      {showVoidConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">Void Sale</h3>
+                <p className="text-sm text-gray-600">
+                  This will void sale #{sale.sale_number} and reverse inventory changes. This action
+                  will be logged in the audit trail.
+                </p>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason for voiding <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={voidReason}
+                onChange={(e) => setVoidReason(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                rows={3}
+                placeholder="Enter reason for voiding this sale..."
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowVoidConfirm(false);
+                  setVoidReason('');
+                }}
+                disabled={isVoiding}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleVoidSale}
+                disabled={!voidReason.trim() || isVoiding}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isVoiding ? 'Voiding...' : 'Void Sale'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }

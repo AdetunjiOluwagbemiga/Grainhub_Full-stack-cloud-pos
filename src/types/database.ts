@@ -158,6 +158,7 @@ export interface Database {
           loyalty_points_earned: number;
           loyalty_points_redeemed: number;
           notes: string | null;
+          is_voided: boolean;
           voided_by: string | null;
           voided_at: string | null;
           void_reason: string | null;
@@ -167,6 +168,22 @@ export interface Database {
         };
         Insert: Omit<Database['public']['Tables']['sales']['Row'], 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['sales']['Insert']>;
+      };
+      audit_logs: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          action: string;
+          table_name: string;
+          record_id: string | null;
+          old_data: Record<string, unknown> | null;
+          new_data: Record<string, unknown> | null;
+          ip_address: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['audit_logs']['Row'], 'id' | 'created_at'>;
+        Update: Partial<Database['public']['Tables']['audit_logs']['Insert']>;
       };
       sale_items: {
         Row: {
@@ -292,6 +309,7 @@ export type TaxRule = Database['public']['Tables']['tax_rules']['Row'];
 export type StockAdjustment = Database['public']['Tables']['stock_adjustments']['Row'];
 export type Refund = Database['public']['Tables']['refunds']['Row'];
 export type ActivityLog = Database['public']['Tables']['activity_logs']['Row'];
+export type AuditLog = Database['public']['Tables']['audit_logs']['Row'];
 
 export interface CartItem {
   product_id: string | null;
