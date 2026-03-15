@@ -80,7 +80,7 @@ export function LoginPage() {
               )}
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Cloud POS System</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Teefoods and Grainhub</h1>
           <p className="text-gray-600 text-base">
             {isSignUp ? 'Create your account to get started' : 'Welcome back! Sign in to continue'}
           </p>

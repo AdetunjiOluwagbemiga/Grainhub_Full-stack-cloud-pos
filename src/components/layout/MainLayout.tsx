@@ -80,7 +80,7 @@ export function MainLayout({ children, activeTab, onTabChange }: MainLayoutProps
           <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
             <DollarSign className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900">Cloud POS</h1>
+          <h1 className="text-xl font-bold text-gray-900">Teefoods & Grainhub</h1>
         </div>
         <div className="flex items-center gap-2">
           {activeShift && (
@@ -110,7 +110,7 @@ export function MainLayout({ children, activeTab, onTabChange }: MainLayoutProps
             <div className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
               <DollarSign className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-white">Cloud POS</h1>
+            <h1 className="text-xl font-bold text-white">Teefoods & Grainhub</h1>
           </div>
           <Button
             variant="ghost"

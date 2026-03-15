@@ -119,7 +119,7 @@ export function CheckoutModal({
         unit_price: item.unit_price,
         line_total: item.line_total,
       })),
-      'Cloud POS System',
+      'Teefoods and Grainhub',
       '123 Main Street'
     );
   };
