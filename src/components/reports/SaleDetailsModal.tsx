@@ -18,14 +18,12 @@ interface SaleDetailsModalProps {
 export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
   const { data: sale, isLoading, error, refetch } = useSaleById(saleId);
   const { data: products } = useProducts();
-  const { user } = useAuth();
+  const { isAdmin } = useAuth();
   const deleteSale = useDeleteSale();
   const [showVoidConfirm, setShowVoidConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [voidReason, setVoidReason] = useState('');
   const [isVoiding, setIsVoiding] = useState(false);
-
-  const isAdmin = user?.role === 'admin';
 
   console.log('Modal - saleId:', saleId, 'sale:', sale, 'isLoading:', isLoading, 'error:', error);
 
