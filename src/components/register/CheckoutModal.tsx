@@ -7,6 +7,7 @@ import { Card, CardContent } from '../ui/Card';
 import { useCreateSale, usePaymentMethods } from '../../hooks/useSales';
 import { useAuth } from '../../contexts/AuthContext';
 import { useActiveShift } from '../../hooks/useShifts';
+import { useSettings } from '../../hooks/useSettings';
 import { CartItem } from '../../types/database';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { generateReceiptHTML, printReceipt, downloadReceipt } from '../../lib/utils';
@@ -43,6 +44,7 @@ export function CheckoutModal({
   const { profile } = useAuth();
   const { data: allPaymentMethods } = usePaymentMethods();
   const { data: activeShift } = useActiveShift();
+  const { data: settings } = useSettings();
   const createSale = useCreateSale();
 
   const paymentMethods = allPaymentMethods?.filter(
@@ -119,8 +121,8 @@ export function CheckoutModal({
         unit_price: item.unit_price,
         line_total: item.line_total,
       })),
-      'Teefoods and Grainhub',
-      '123 Main Street'
+      settings?.store_name || 'POS System',
+      settings?.store_address || ''
     );
   };
 
