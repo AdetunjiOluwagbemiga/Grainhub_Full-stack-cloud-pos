@@ -14,21 +14,17 @@ import { CheckoutModal } from './CheckoutModal';
 import toast from 'react-hot-toast';
 
 export function Register() {
-  const [barcode, setBarcode] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [showBarcodeResults, setShowBarcodeResults] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editQuantity, setEditQuantity] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const barcodeInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const barcodeDropdownRef = useRef<HTMLDivElement>(null);
+  const searchDropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: products, isLoading: productsLoading } = useProducts();
-  const { data: scannedProduct } = useProductByBarcode(barcode);
   const { formatCurrency } = useCurrency();
   const { data: paymentMethods } = usePaymentMethods();
   const { data: activeShift } = useActiveShift();
@@ -91,45 +87,12 @@ export function Register() {
     )
   ).slice(0, 10) || [];
 
-  const barcodeResults = products?.filter(p =>
-    barcode.length > 0 && (
-      p.name.toLowerCase().includes(barcode.toLowerCase()) ||
-      p.sku.toLowerCase().includes(barcode.toLowerCase()) ||
-      p.barcode?.toLowerCase().includes(barcode.toLowerCase()) ||
-      p.barcodes?.some(b => b.barcode.toLowerCase().includes(barcode.toLowerCase()))
-    )
-  ).slice(0, 10) || [];
-
-  useEffect(() => {
-    const handleGlobalBarcode = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement &&
-        e.target !== barcodeInputRef.current
-      ) {
-        return;
-      }
-
-      if (e.key === 'Enter' && barcode) {
-        handleBarcodeSubmit();
-      }
-    };
-
-    window.addEventListener('keydown', handleGlobalBarcode);
-    return () => window.removeEventListener('keydown', handleGlobalBarcode);
-  }, [barcode]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchInputRef.current && !searchInputRef.current.contains(e.target as Node)) {
-        const searchDropdown = searchInputRef.current.parentElement?.querySelector('[data-search-dropdown]');
-        if (!searchDropdown?.contains(e.target as Node)) {
+        if (searchDropdownRef.current && !searchDropdownRef.current.contains(e.target as Node)) {
           setShowSearchResults(false);
-        }
-      }
-      if (barcodeInputRef.current && !barcodeInputRef.current.contains(e.target as Node)) {
-        const barcodeDropdown = barcodeDropdownRef.current;
-        if (barcodeDropdown && !barcodeDropdown.contains(e.target as Node)) {
-          setShowBarcodeResults(false);
         }
       }
     };
@@ -138,39 +101,6 @@ export function Register() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    if (scannedProduct) {
-      addToCart(scannedProduct);
-      setBarcode('');
-    }
-  }, [scannedProduct]);
-
-  const handleBarcodeSubmit = () => {
-    if (!barcode.trim()) {
-      toast.error('Please enter a barcode or SKU');
-      return;
-    }
-
-    if (!products || products.length === 0) {
-      toast.error('No products available');
-      return;
-    }
-
-    const searchValue = barcode.trim().toLowerCase();
-    const product = products.find(p =>
-      p.sku.toLowerCase() === searchValue ||
-      p.barcode?.toLowerCase() === searchValue ||
-      p.barcodes?.some(b => b.barcode.toLowerCase() === searchValue)
-    );
-
-    if (product) {
-      addToCart(product);
-      setBarcode('');
-    } else {
-      toast.error(`No product found with barcode/SKU: ${barcode}`);
-      setBarcode('');
-    }
-  };
 
   const addToCart = (product: any, silent = false) => {
     const availableStock = product.current_stock || 0;
@@ -384,101 +314,42 @@ export function Register() {
 
           <Card className="mb-4">
             <CardContent className="p-4">
-              <div className="flex gap-2 mb-3">
-                <div className="flex-1 relative">
-                  <Scan className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <div className="relative">
+                <div className="flex gap-2">
+                  <Scan className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+                  <Search className="absolute left-10 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
                   <Input
-                    ref={barcodeInputRef}
+                    ref={searchInputRef}
                     type="text"
-                    placeholder="Scan barcode or enter SKU..."
-                    value={barcode}
+                    placeholder="Scan barcode, enter SKU, or search by name..."
+                    value={searchTerm}
                     onChange={(e) => {
-                      setBarcode(e.target.value);
-                      setShowBarcodeResults(e.target.value.length > 0);
+                      setSearchTerm(e.target.value);
+                      setShowSearchResults(e.target.value.length > 0);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        if (barcodeResults.length === 1) {
-                          addToCart(barcodeResults[0]);
-                        } else if (barcodeResults.length > 1) {
-                          setShowBarcodeResults(true);
-                        } else {
-                          handleBarcodeSubmit();
+                        if (searchResults.length === 1) {
+                          addToCart(searchResults[0]);
+                          setSearchTerm('');
+                          setShowSearchResults(false);
+                        } else if (searchResults.length > 1) {
+                          setShowSearchResults(true);
+                        } else if (searchTerm.trim()) {
+                          toast.error(`No product found: ${searchTerm}`);
                         }
                       }
                     }}
-                    onFocus={() => setShowBarcodeResults(barcode.length > 0)}
-                    className="pl-10"
+                    onFocus={() => setShowSearchResults(searchTerm.length > 0)}
+                    className="pl-16 flex-1"
                     autoFocus
                   />
-
-                  {showBarcodeResults && barcodeResults.length > 0 && (
-                    <div
-                      ref={barcodeDropdownRef}
-                      className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"
-                    >
-                      {barcodeResults.map((product) => (
-                        <button
-                          key={product.id}
-                          onClick={() => addToCart(product)}
-                          className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 focus:outline-none focus:bg-gray-50"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex-1">
-                              <p className="font-medium text-gray-900">{product.name}</p>
-                              <p className="text-sm text-gray-500">SKU: {product.sku}</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="font-semibold text-gray-900">
-                                {formatCurrency(product.retail_price)}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Stock: {product.current_stock || 0}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
                 </div>
-                <Button
-                  onClick={handleBarcodeSubmit}
-                  disabled={productsLoading || !barcode.trim()}
-                >
-                  {productsLoading ? 'Loading...' : 'Add'}
-                </Button>
-              </div>
-
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search products by name or SKU..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    setShowSearchResults(e.target.value.length > 0);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      if (searchResults.length === 1) {
-                        addToCart(searchResults[0]);
-                      } else if (searchResults.length > 1) {
-                        setShowSearchResults(true);
-                      }
-                    }
-                  }}
-                  onFocus={() => setShowSearchResults(searchTerm.length > 0)}
-                  className="pl-10"
-                />
 
                 {showSearchResults && (
                   <div
-                    data-search-dropdown
+                    ref={searchDropdownRef}
                     className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto"
                   >
                     {searchResults.length === 0 ? (
@@ -492,6 +363,8 @@ export function Register() {
                         onMouseDown={(e) => {
                           e.preventDefault();
                           addToCart(product);
+                          setSearchTerm('');
+                          setShowSearchResults(false);
                         }}
                         className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0 focus:outline-none focus:bg-gray-50"
                       >
