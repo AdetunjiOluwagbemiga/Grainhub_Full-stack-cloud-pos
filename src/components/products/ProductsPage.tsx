@@ -28,6 +28,7 @@ export function ProductsPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
@@ -156,10 +157,18 @@ export function ProductsPage() {
     }
 
     setImporting(true);
-    const toastId = toast.loading('Importing products...');
+    setImportProgress({ current: 0, total: 0 });
+    const toastId = toast.loading('Importing products... 0/0');
 
     try {
-      const result = await importProductsFromExcel(file, user?.id || null);
+      const result = await importProductsFromExcel(
+        file,
+        user?.id || null,
+        (current, total) => {
+          setImportProgress({ current, total });
+          toast.loading(`Importing products... ${current}/${total}`, { id: toastId });
+        }
+      );
 
       await queryClient.invalidateQueries({ queryKey: ['products'] });
 
@@ -176,6 +185,7 @@ export function ProductsPage() {
       toast.error(error.message || 'Failed to import products', { id: toastId });
     } finally {
       setImporting(false);
+      setImportProgress({ current: 0, total: 0 });
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -257,7 +267,13 @@ export function ProductsPage() {
             </Button>
             <Button variant="secondary" onClick={handleImportClick} disabled={importing} size="sm" className="flex-1 sm:flex-none">
               <Upload className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">{importing ? 'Importing...' : 'Import Excel'}</span>
+              <span className="hidden sm:inline">
+                {importing && importProgress.total > 0
+                  ? `Importing ${importProgress.current}/${importProgress.total}`
+                  : importing
+                  ? 'Importing...'
+                  : 'Import Excel'}
+              </span>
             </Button>
             <Button variant="secondary" onClick={handleExport} size="sm" className="flex-1 sm:flex-none">
               <Download className="w-4 h-4 sm:mr-2" />

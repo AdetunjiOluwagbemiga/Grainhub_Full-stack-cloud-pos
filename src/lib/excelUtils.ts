@@ -47,7 +47,8 @@ export async function exportProductsToExcel(products: any[]) {
 
 export async function importProductsFromExcel(
   file: File,
-  userId: string | null
+  userId: string | null,
+  onProgress?: (current: number, total: number) => void
 ): Promise<{ success: number; errors: string[] }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -62,6 +63,7 @@ export async function importProductsFromExcel(
 
         const errors: string[] = [];
         let successCount = 0;
+        const totalRows = jsonData.length;
 
         const { data: defaultLocation } = await supabase
           .from('locations')
@@ -171,7 +173,10 @@ export async function importProductsFromExcel(
             errors.push(`Row ${rowNum} (${sku}): ${error.message}`);
           }
 
-          // Add a small delay every 50 products to prevent overwhelming the database
+          if (onProgress) {
+            onProgress(i + 1, totalRows);
+          }
+
           if ((i + 1) % 50 === 0) {
             await new Promise(resolve => setTimeout(resolve, 100));
           }
