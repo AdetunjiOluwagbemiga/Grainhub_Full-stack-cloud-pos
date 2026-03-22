@@ -207,14 +207,22 @@ export function useDeleteProducts() {
 
   return useMutation({
     mutationFn: async (productIds: string[]) => {
-      const { data, error } = await supabase
-        .from('products')
-        .update({ is_active: false })
-        .in('id', productIds)
-        .select();
+      const batchSize = 50;
+      const results = [];
 
-      if (error) throw error;
-      return data;
+      for (let i = 0; i < productIds.length; i += batchSize) {
+        const batch = productIds.slice(i, i + batchSize);
+        const { data, error } = await supabase
+          .from('products')
+          .update({ is_active: false })
+          .in('id', batch)
+          .select();
+
+        if (error) throw error;
+        results.push(...(data || []));
+      }
+
+      return results;
     },
     onSuccess: (_, productIds) => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
