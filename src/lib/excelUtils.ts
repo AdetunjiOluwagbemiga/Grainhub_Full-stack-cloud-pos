@@ -62,7 +62,8 @@ export async function importProductsFromExcel(
         const jsonData = XLSX.utils.sheet_to_json<ProductExcelRow>(worksheet);
 
         const errors: string[] = [];
-        let successCount = 0;
+        let createdCount = 0;
+        let updatedCount = 0;
         const totalRows = jsonData.length;
 
         const { data: defaultLocation } = await supabase
@@ -127,6 +128,7 @@ export async function importProductsFromExcel(
             };
 
             let productId: string;
+            let isUpdate = false;
 
             if (existingProduct.data) {
               const { error } = await supabase
@@ -136,6 +138,7 @@ export async function importProductsFromExcel(
 
               if (error) throw error;
               productId = existingProduct.data.id;
+              isUpdate = true;
             } else {
               const { data: newProduct, error } = await supabase
                 .from('products')
@@ -180,7 +183,11 @@ export async function importProductsFromExcel(
               if (invError) throw new Error(`Failed to create inventory: ${invError.message}`);
             }
 
-            successCount++;
+            if (isUpdate) {
+              updatedCount++;
+            } else {
+              createdCount++;
+            }
           } catch (error: any) {
             errors.push(`Row ${rowNum} (${sku}): ${error.message}`);
           }
@@ -194,7 +201,7 @@ export async function importProductsFromExcel(
           }
         }
 
-        resolve({ success: successCount, errors });
+        resolve({ success: createdCount + updatedCount, created: createdCount, updated: updatedCount, errors });
       } catch (error: any) {
         reject(new Error(`Failed to parse Excel file: ${error.message}`));
       }

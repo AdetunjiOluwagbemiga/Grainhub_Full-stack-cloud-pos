@@ -172,14 +172,26 @@ export function ProductsPage() {
 
       await queryClient.invalidateQueries({ queryKey: ['products'] });
 
+      const hasCreated = (result as any).created > 0;
+      const hasUpdated = (result as any).updated > 0;
+
+      let message = '';
+      if (hasCreated && hasUpdated) {
+        message = `Created ${(result as any).created} new products, updated ${(result as any).updated} existing products`;
+      } else if (hasCreated) {
+        message = `Created ${(result as any).created} new products`;
+      } else if (hasUpdated) {
+        message = `Updated ${(result as any).updated} existing products`;
+      }
+
       if (result.errors.length > 0) {
         toast.error(
-          `Imported ${result.success} products with ${result.errors.length} errors. Check console for details.`,
+          `${message} with ${result.errors.length} errors. Check console for details.`,
           { id: toastId, duration: 5000 }
         );
         console.error('Import errors:', result.errors);
       } else {
-        toast.success(`Successfully imported ${result.success} products!`, { id: toastId });
+        toast.success(message, { id: toastId, duration: 4000 });
       }
     } catch (error: any) {
       toast.error(error.message || 'Failed to import products', { id: toastId });
