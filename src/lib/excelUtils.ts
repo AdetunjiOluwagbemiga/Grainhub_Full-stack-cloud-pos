@@ -87,9 +87,21 @@ export async function importProductsFromExcel(
               continue;
             }
 
-            // Generate SKU if not provided
-            if (!sku || sku.trim() === '') {
-              sku = `AUTO-${Date.now()}-${i}`;
+            // Check for existing product by name first (case-insensitive)
+            const existingByName = await supabase
+              .from('products')
+              .select('id, sku, name')
+              .ilike('name', row.Name)
+              .maybeSingle();
+
+            // If product exists by name, use its SKU and update it
+            if (existingByName.data) {
+              sku = existingByName.data.sku;
+            } else {
+              // Generate SKU if not provided
+              if (!sku || sku.trim() === '') {
+                sku = `AUTO-${Date.now()}-${i}`;
+              }
             }
 
             const existingProduct = await supabase
