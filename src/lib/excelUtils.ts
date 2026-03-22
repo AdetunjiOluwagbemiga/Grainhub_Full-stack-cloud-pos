@@ -79,7 +79,7 @@ export async function importProductsFromExcel(
         for (let i = 0; i < jsonData.length; i++) {
           const row = jsonData[i];
           const rowNum = i + 2;
-          let sku = row.SKU || '';
+          let sku = row.SKU ? String(row.SKU) : '';
 
           try {
             if (!row.Name || !row['Retail Price']) {
@@ -331,9 +331,10 @@ export async function importInventoryFromExcel(
         for (let i = 0; i < jsonData.length; i++) {
           const row = jsonData[i];
           const rowNum = i + 2;
+          const sku = row.SKU ? String(row.SKU) : '';
 
           try {
-            if (!row.SKU || row.Quantity === undefined) {
+            if (!sku || row.Quantity === undefined) {
               errors.push(`Row ${rowNum}: Missing required fields (SKU or Quantity)`);
               continue;
             }
@@ -341,11 +342,11 @@ export async function importInventoryFromExcel(
             const product = await supabase
               .from('products')
               .select('id')
-              .eq('sku', row.SKU)
+              .eq('sku', sku)
               .maybeSingle();
 
             if (!product.data) {
-              errors.push(`Row ${rowNum}: Product with SKU "${row.SKU}" not found`);
+              errors.push(`Row ${rowNum}: Product with SKU "${sku}" not found`);
               continue;
             }
 
@@ -381,7 +382,7 @@ export async function importInventoryFromExcel(
 
             successCount++;
           } catch (error: any) {
-            errors.push(`Row ${rowNum} (${row.SKU}): ${error.message}`);
+            errors.push(`Row ${rowNum} (${sku}): ${error.message}`);
           }
         }
 
@@ -494,8 +495,8 @@ export async function importCustomersFromExcel(
               continue;
             }
 
-            let customerCode = row['Customer ID'];
-            if (!customerCode) {
+            let customerCode = row['Customer ID'] ? String(row['Customer ID']) : '';
+            if (!customerCode || customerCode.trim() === '') {
               customerCode = `CUST-${Date.now()}-${i}`;
             }
 
