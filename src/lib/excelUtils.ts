@@ -77,6 +77,7 @@ export async function importProductsFromExcel(
         for (let i = 0; i < jsonData.length; i++) {
           const row = jsonData[i];
           const rowNum = i + 2;
+          let sku = row.SKU || '';
 
           try {
             if (!row.Name || !row['Retail Price']) {
@@ -85,7 +86,6 @@ export async function importProductsFromExcel(
             }
 
             // Generate SKU if not provided
-            let sku = row.SKU;
             if (!sku || sku.trim() === '') {
               sku = `AUTO-${Date.now()}-${i}`;
             }
