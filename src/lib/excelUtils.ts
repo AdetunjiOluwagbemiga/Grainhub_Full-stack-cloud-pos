@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx';
 import { supabase } from './supabase';
 
 export interface ProductExcelRow {
-  SKU: string;
+  SKU?: string;
   Name: string;
   Description?: string;
   'Current Stock': number;
@@ -79,19 +79,25 @@ export async function importProductsFromExcel(
           const rowNum = i + 2;
 
           try {
-            if (!row.SKU || !row.Name || !row['Retail Price']) {
-              errors.push(`Row ${rowNum}: Missing required fields (SKU, Name, or Retail Price)`);
+            if (!row.Name || !row['Retail Price']) {
+              errors.push(`Row ${rowNum}: Missing required fields (Name or Retail Price)`);
               continue;
+            }
+
+            // Generate SKU if not provided
+            let sku = row.SKU;
+            if (!sku || sku.trim() === '') {
+              sku = `AUTO-${Date.now()}-${i}`;
             }
 
             const existingProduct = await supabase
               .from('products')
               .select('id')
-              .eq('sku', row.SKU)
+              .eq('sku', sku)
               .maybeSingle();
 
             const productData = {
-              sku: row.SKU,
+              sku: sku,
               name: row.Name,
               description: row.Description || null,
               cost_price: row['Cost Price'] || 0,
@@ -162,7 +168,12 @@ export async function importProductsFromExcel(
 
             successCount++;
           } catch (error: any) {
-            errors.push(`Row ${rowNum} (${row.SKU}): ${error.message}`);
+            errors.push(`Row ${rowNum} (${sku}): ${error.message}`);
+          }
+
+          // Add a small delay every 50 products to prevent overwhelming the database
+          if ((i + 1) % 50 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 100));
           }
         }
 
@@ -189,6 +200,16 @@ export function downloadExcelTemplate() {
       'Current Stock': 0,
       'Cost Price': 10.00,
       'Retail Price': 20.00,
+      'Tax Rate (%)': 15,
+      'Unit of Measure': 'piece',
+    },
+    {
+      SKU: '',
+      Name: 'Product Without Barcode',
+      Description: 'SKU will be auto-generated if left blank',
+      'Current Stock': 10,
+      'Cost Price': 5.00,
+      'Retail Price': 12.00,
       'Tax Rate (%)': 15,
       'Unit of Measure': 'piece',
     },
