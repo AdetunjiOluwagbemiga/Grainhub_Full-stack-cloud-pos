@@ -54,8 +54,10 @@ export function ProductsPage() {
 
   const handleSubmit = async () => {
     try {
+      const { initial_quantity, ...formDataWithoutQuantity } = formData;
+
       const productData = {
-        ...formData,
+        ...formDataWithoutQuantity,
         cost_price: parseFloat(formData.cost_price),
         retail_price: parseFloat(formData.retail_price),
         margin_percent: formData.margin_percent ? parseFloat(formData.margin_percent) : 0,
