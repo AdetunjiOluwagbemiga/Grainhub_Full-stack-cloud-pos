@@ -7,20 +7,36 @@ export function useProducts() {
   return useQuery({
     queryKey: ['products'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          category:categories(*),
-          barcodes(*),
-          inventory(quantity)
-        `)
-        .eq('is_active', true)
-        .order('name');
+      let allProducts: any[] = [];
+      let from = 0;
+      const batchSize = 1000;
+      let hasMore = true;
 
-      if (error) throw error;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from('products')
+          .select(`
+            *,
+            category:categories(*),
+            barcodes(*),
+            inventory(quantity)
+          `)
+          .eq('is_active', true)
+          .order('name')
+          .range(from, from + batchSize - 1);
 
-      const productsWithStock = (data || []).map((product: any) => ({
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          allProducts = [...allProducts, ...data];
+          from += batchSize;
+          hasMore = data.length === batchSize;
+        } else {
+          hasMore = false;
+        }
+      }
+
+      const productsWithStock = allProducts.map((product: any) => ({
         ...product,
         current_stock: product.inventory?.reduce((sum: number, inv: any) => sum + (inv.quantity || 0), 0) || 0,
       }));
