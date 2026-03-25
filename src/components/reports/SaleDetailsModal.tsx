@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { X, User, Calendar, CreditCard, Package, DollarSign, AlertTriangle, Trash2 } from 'lucide-react';
+import { X, User, Calendar, CreditCard, Package, DollarSign, AlertTriangle, Trash2, Printer, Download } from 'lucide-react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { useSaleById, useDeleteSale } from '../../hooks/useSales';
 import { useProducts } from '../../hooks/useProducts';
+import { useSettings } from '../../hooks/useSettings';
 import { formatCurrency } from '../../lib/currency';
 import { format } from 'date-fns';
+import { generateReceiptHTML, printReceipt, downloadReceipt } from '../../lib/utils';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -18,6 +20,7 @@ interface SaleDetailsModalProps {
 export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
   const { data: sale, isLoading, error, refetch } = useSaleById(saleId);
   const { data: products } = useProducts();
+  const { data: settings } = useSettings();
   const { isAdmin } = useAuth();
   const deleteSale = useDeleteSale();
   const [showVoidConfirm, setShowVoidConfirm] = useState(false);
@@ -107,6 +110,71 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
       onClose();
     } catch (error: any) {
       console.error('Error deleting sale:', error);
+    }
+  };
+
+  const handlePrintReceipt = () => {
+    if (!sale) return;
+
+    try {
+      const receiptHTML = generateReceiptHTML(
+        {
+          sale_number: sale.sale_number,
+          created_at: sale.created_at,
+          subtotal: sale.subtotal,
+          discount_amount: sale.discount_amount,
+          tax_amount: sale.tax_amount,
+          total_amount: sale.total_amount,
+          amount_paid: sale.amount_paid || sale.total_amount,
+          change_amount: sale.change_amount || 0,
+        },
+        sale.sale_items.map((item: any) => ({
+          product_name: getProductName(item.product_id, item.variant_id),
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          line_total: item.line_total,
+        })),
+        settings?.store_name || 'POS System',
+        settings?.store_address || ''
+      );
+      printReceipt(receiptHTML);
+      toast.success('Receipt sent to printer');
+    } catch (printError) {
+      console.error('Print failed:', printError);
+      toast.error((printError as Error).message || 'Failed to print receipt. Try downloading instead.');
+    }
+  };
+
+  const handleDownloadReceipt = () => {
+    if (!sale) return;
+
+    try {
+      const receiptHTML = generateReceiptHTML(
+        {
+          sale_number: sale.sale_number,
+          created_at: sale.created_at,
+          subtotal: sale.subtotal,
+          discount_amount: sale.discount_amount,
+          tax_amount: sale.tax_amount,
+          total_amount: sale.total_amount,
+          amount_paid: sale.amount_paid || sale.total_amount,
+          change_amount: sale.change_amount || 0,
+        },
+        sale.sale_items.map((item: any) => ({
+          product_name: getProductName(item.product_id, item.variant_id),
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          line_total: item.line_total,
+        })),
+        settings?.store_name || 'POS System',
+        settings?.store_address || ''
+      );
+      const filename = `receipt-${sale.sale_number}.html`;
+      downloadReceipt(receiptHTML, filename);
+      toast.success('Receipt downloaded successfully');
+    } catch (error) {
+      console.error('Download failed:', error);
+      toast.error('Failed to download receipt');
     }
   };
 
@@ -308,8 +376,28 @@ export function SaleDetailsModal({ saleId, onClose }: SaleDetailsModalProps) {
         )}
 
         {/* Footer Actions */}
-        <div className="flex justify-between items-center pt-4 border-t">
-          <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center pt-4 border-t gap-3">
+          <div className="flex flex-wrap gap-2">
+            {sale.status === 'completed' && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handlePrintReceipt}
+                  className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print Receipt
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadReceipt}
+                  className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Receipt
+                </Button>
+              </>
+            )}
             {isAdmin && sale.status === 'completed' && !sale.is_voided && (
               <Button
                 variant="outline"
