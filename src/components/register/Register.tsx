@@ -155,11 +155,9 @@ export function Register() {
       }
     }
 
-    setBarcode('');
     setSearchTerm('');
-    setShowBarcodeResults(false);
     setShowSearchResults(false);
-    barcodeInputRef.current?.focus();
+    searchInputRef.current?.focus();
   };
 
   const updateQuantity = (index: number, newQuantity: number) => {
