@@ -232,6 +232,9 @@ export function generateReceiptHTML(
             width: 80mm;
             height: auto;
           }
+          .receipt-copy:first-child {
+            page-break-after: always;
+          }
         }
         body {
           font-family: 'Courier New', monospace;
@@ -244,7 +247,6 @@ export function generateReceiptHTML(
         }
         .receipt-copy {
           padding: 5mm;
-          page-break-after: auto;
         }
         .copy-label {
           text-align: center;
@@ -255,21 +257,6 @@ export function generateReceiptHTML(
           background: #f0f0f0;
           border: 2px solid #000;
         }
-        .separator {
-          border-top: 3px dashed #000;
-          margin: 10mm 5mm;
-          position: relative;
-        }
-        .separator::after {
-          content: '✂';
-          position: absolute;
-          left: 50%;
-          top: -8px;
-          transform: translateX(-50%);
-          background: white;
-          padding: 0 5px;
-          font-size: 14px;
-        }
         .header {
           text-align: center;
           margin-bottom: 10px;
@@ -279,6 +266,7 @@ export function generateReceiptHTML(
         .header h1 {
           margin: 0;
           font-size: 18px;
+          font-weight: bold;
         }
         .header p {
           margin: 2px 0;
@@ -331,7 +319,6 @@ export function generateReceiptHTML(
     </head>
     <body>
       ${merchantCopy}
-      <div class="separator"></div>
       ${customerCopy}
     </body>
     </html>
