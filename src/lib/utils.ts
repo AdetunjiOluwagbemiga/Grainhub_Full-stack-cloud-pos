@@ -100,6 +100,90 @@ export function calculateCartTotals(
   };
 }
 
+function generateSingleReceipt(
+  sale: {
+    sale_number: string;
+    created_at: string;
+    subtotal: number;
+    discount_amount: number;
+    tax_amount: number;
+    total_amount: number;
+    amount_paid: number;
+    change_amount: number;
+  },
+  items: Array<{
+    product_name: string;
+    quantity: number;
+    unit_price: number;
+    line_total: number;
+  }>,
+  storeName: string,
+  storeAddress: string,
+  copyLabel: string
+): string {
+  return `
+    <div class="receipt-copy">
+      <div class="copy-label">${copyLabel}</div>
+
+      <div class="header">
+        <h1>${storeName}</h1>
+        ${storeAddress ? `<p>${storeAddress}</p>` : ''}
+      </div>
+
+      <div class="info">
+        <div>Receipt #: ${sale.sale_number}</div>
+        <div>Date: ${formatDate(sale.created_at)}</div>
+      </div>
+
+      <div class="items">
+        ${items.map(item => `
+          <div class="item">
+            <div class="item-name">${item.product_name}</div>
+            <div class="item-details">
+              <span>${item.quantity} x ${formatCurrency(item.unit_price)}</span>
+              <span>${formatCurrency(item.line_total)}</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="totals">
+        <div class="total-line">
+          <span>Subtotal:</span>
+          <span>${formatCurrency(sale.subtotal)}</span>
+        </div>
+        ${sale.discount_amount > 0 ? `
+          <div class="total-line">
+            <span>Discount:</span>
+            <span>-${formatCurrency(sale.discount_amount)}</span>
+          </div>
+        ` : ''}
+        <div class="total-line">
+          <span>Tax:</span>
+          <span>${formatCurrency(sale.tax_amount)}</span>
+        </div>
+        <div class="total-line grand">
+          <span>TOTAL:</span>
+          <span>${formatCurrency(sale.total_amount)}</span>
+        </div>
+        <div class="total-line">
+          <span>Paid:</span>
+          <span>${formatCurrency(sale.amount_paid)}</span>
+        </div>
+        <div class="total-line">
+          <span>Change:</span>
+          <span>${formatCurrency(sale.change_amount)}</span>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p>Thank you for your purchase!</p>
+        <p>Please visit us again</p>
+      </div>
+    </div>
+  `;
+}
+
 export function generateReceiptHTML(
   sale: {
     sale_number: string;
@@ -120,6 +204,9 @@ export function generateReceiptHTML(
   storeName: string = 'POS System',
   storeAddress: string = ''
 ): string {
+  const merchantCopy = generateSingleReceipt(sale, items, storeName, storeAddress, 'MERCHANT COPY');
+  const customerCopy = generateSingleReceipt(sale, items, storeName, storeAddress, 'CUSTOMER COPY');
+
   return `
     <!DOCTYPE html>
     <html>
@@ -151,9 +238,37 @@ export function generateReceiptHTML(
           font-size: 12px;
           width: 80mm;
           margin: 0 auto;
-          padding: 5mm;
+          padding: 0;
           background: white;
           color: black;
+        }
+        .receipt-copy {
+          padding: 5mm;
+          page-break-after: auto;
+        }
+        .copy-label {
+          text-align: center;
+          font-weight: bold;
+          font-size: 14px;
+          margin-bottom: 10px;
+          padding: 5px;
+          background: #f0f0f0;
+          border: 2px solid #000;
+        }
+        .separator {
+          border-top: 3px dashed #000;
+          margin: 10mm 5mm;
+          position: relative;
+        }
+        .separator::after {
+          content: '✂';
+          position: absolute;
+          left: 50%;
+          top: -8px;
+          transform: translateX(-50%);
+          background: white;
+          padding: 0 5px;
+          font-size: 14px;
         }
         .header {
           text-align: center;
@@ -215,61 +330,9 @@ export function generateReceiptHTML(
       </style>
     </head>
     <body>
-      <div class="header">
-        <h1>${storeName}</h1>
-        ${storeAddress ? `<p>${storeAddress}</p>` : ''}
-      </div>
-
-      <div class="info">
-        <div>Receipt #: ${sale.sale_number}</div>
-        <div>Date: ${formatDate(sale.created_at)}</div>
-      </div>
-
-      <div class="items">
-        ${items.map(item => `
-          <div class="item">
-            <div class="item-name">${item.product_name}</div>
-            <div class="item-details">
-              <span>${item.quantity} x ${formatCurrency(item.unit_price)}</span>
-              <span>${formatCurrency(item.line_total)}</span>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-
-      <div class="totals">
-        <div class="total-line">
-          <span>Subtotal:</span>
-          <span>${formatCurrency(sale.subtotal)}</span>
-        </div>
-        ${sale.discount_amount > 0 ? `
-          <div class="total-line">
-            <span>Discount:</span>
-            <span>-${formatCurrency(sale.discount_amount)}</span>
-          </div>
-        ` : ''}
-        <div class="total-line">
-          <span>Tax:</span>
-          <span>${formatCurrency(sale.tax_amount)}</span>
-        </div>
-        <div class="total-line grand">
-          <span>TOTAL:</span>
-          <span>${formatCurrency(sale.total_amount)}</span>
-        </div>
-        <div class="total-line">
-          <span>Paid:</span>
-          <span>${formatCurrency(sale.amount_paid)}</span>
-        </div>
-        <div class="total-line">
-          <span>Change:</span>
-          <span>${formatCurrency(sale.change_amount)}</span>
-        </div>
-      </div>
-
-      <div class="footer">
-        <p>Thank you for your purchase!</p>
-        <p>Please visit us again</p>
-      </div>
+      ${merchantCopy}
+      <div class="separator"></div>
+      ${customerCopy}
     </body>
     </html>
   `;
