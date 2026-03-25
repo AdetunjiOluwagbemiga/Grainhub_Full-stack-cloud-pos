@@ -239,23 +239,26 @@ export function generateReceiptHTML(
         body {
           font-family: 'Courier New', monospace;
           font-size: 12px;
+          font-weight: bold;
           width: 80mm;
           margin: 0 auto;
           padding: 0;
           background: white;
           color: black;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
         }
         .receipt-copy {
           padding: 5mm;
         }
         .copy-label {
           text-align: center;
-          font-weight: bold;
+          font-weight: 900;
           font-size: 14px;
           margin-bottom: 10px;
           padding: 5px;
           background: #f0f0f0;
-          border: 2px solid #000;
+          border: 3px solid #000;
         }
         .header {
           text-align: center;
@@ -265,8 +268,9 @@ export function generateReceiptHTML(
         }
         .header h1 {
           margin: 0;
-          font-size: 18px;
-          font-weight: bold;
+          font-size: 20px;
+          font-weight: 900;
+          letter-spacing: 0.5px;
         }
         .header p {
           margin: 2px 0;
@@ -286,7 +290,7 @@ export function generateReceiptHTML(
           margin: 5px 0;
         }
         .item-name {
-          font-weight: bold;
+          font-weight: 900;
         }
         .item-details {
           display: flex;
@@ -302,11 +306,11 @@ export function generateReceiptHTML(
           margin: 3px 0;
         }
         .total-line.grand {
-          font-weight: bold;
-          font-size: 14px;
+          font-weight: 900;
+          font-size: 16px;
           margin-top: 5px;
           padding-top: 5px;
-          border-top: 1px solid #000;
+          border-top: 2px solid #000;
         }
         .footer {
           text-align: center;
