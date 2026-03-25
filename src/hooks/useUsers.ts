@@ -45,27 +45,36 @@ export function useCreateUser() {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (!session) {
-        throw new Error('No active session');
+        throw new Error('No active session. Please log in again.');
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`,
-        {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`;
+      console.log('Creating user with URL:', url);
+
+      try {
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${session.access_token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(userData),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('Server error response:', errorData);
+          throw new Error(errorData.error || `Server error: ${response.status}`);
         }
-      );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create user');
+        return await response.json();
+      } catch (error) {
+        console.error('Fetch error:', error);
+        if (error instanceof TypeError && error.message === 'Failed to fetch') {
+          throw new Error('Network error: Unable to reach the server. Please check your connection and try again.');
+        }
+        throw error;
       }
-
-      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
