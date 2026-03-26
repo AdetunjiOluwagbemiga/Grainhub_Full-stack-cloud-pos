@@ -1,4 +1,5 @@
 export type UserRole = 'admin' | 'manager' | 'cashier';
+export type AccountStatus = 'pending' | 'approved' | 'rejected';
 export type SaleStatus = 'completed' | 'suspended' | 'voided' | 'refunded';
 export type ActivityType = 'login' | 'logout' | 'sale' | 'refund' | 'void' |
   'stock_adjustment' | 'product_create' | 'product_update' |
@@ -15,6 +16,7 @@ export interface Database {
           role: UserRole;
           pin_code: string | null;
           is_active: boolean;
+          account_status: AccountStatus;
           last_login_at: string | null;
           created_at: string;
           updated_at: string;

@@ -144,6 +144,7 @@ Deno.serve(async (req: Request) => {
         role,
         pin_code: pin_code || null,
         is_active: true,
+        account_status: 'approved', // Admin-created users are auto-approved
       });
 
     if (profileError) {

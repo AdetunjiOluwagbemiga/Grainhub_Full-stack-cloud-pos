@@ -82,14 +82,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: data.id,
           role: data.role,
           email: data.email,
-          full_name: data.full_name
+          full_name: data.full_name,
+          account_status: data.account_status
         });
+
+        // Check if account is not approved
+        if (data.account_status !== 'approved') {
+          console.warn('Account not approved, signing out user');
+          await supabase.auth.signOut();
+          throw new Error(
+            data.account_status === 'pending'
+              ? 'Your account is pending admin approval. Please contact your administrator.'
+              : 'Your account has been rejected. Please contact your administrator.'
+          );
+        }
       }
 
       setProfile(data);
     } catch (error) {
       console.error('Fatal error loading profile:', error);
       setProfile(null);
+      throw error;
     } finally {
       setLoading(false);
     }

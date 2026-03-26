@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, UserPlus, CreditCard as Edit2, Lock, Power } from 'lucide-react';
+import { Users, UserPlus, CreditCard as Edit2, Lock, Power, Check, X } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { useUsers, useUpdateUser, useDeleteUser } from '../../hooks/useUsers';
@@ -7,6 +7,7 @@ import { CreateUserModal } from './CreateUserModal';
 import { EditUserModal } from './EditUserModal';
 import { ResetPasswordModal } from './ResetPasswordModal';
 import type { UserProfile } from '../../hooks/useUsers';
+import toast from 'react-hot-toast';
 
 export function UsersPage() {
   const { data: users, isLoading } = useUsers();
@@ -23,6 +24,30 @@ export function UsersPage() {
     });
   };
 
+  const handleApproveUser = async (user: UserProfile) => {
+    try {
+      await updateUser.mutateAsync({
+        id: user.id,
+        updates: { account_status: 'approved' }
+      });
+      toast.success(`${user.full_name}'s account has been approved`);
+    } catch (error) {
+      toast.error('Failed to approve user');
+    }
+  };
+
+  const handleRejectUser = async (user: UserProfile) => {
+    try {
+      await updateUser.mutateAsync({
+        id: user.id,
+        updates: { account_status: 'rejected' }
+      });
+      toast.success(`${user.full_name}'s account has been rejected`);
+    } catch (error) {
+      toast.error('Failed to reject user');
+    }
+  };
+
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'admin':
@@ -31,6 +56,19 @@ export function UsersPage() {
         return 'bg-blue-100 text-blue-800';
       case 'cashier':
         return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getAccountStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -71,6 +109,7 @@ export function UsersPage() {
                     <th className="text-left py-3 px-4 font-medium text-gray-700">Email</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">Role</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">PIN Code</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Account</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-700">Last Login</th>
                     <th className="text-right py-3 px-4 font-medium text-gray-700">Actions</th>
@@ -94,6 +133,11 @@ export function UsersPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getAccountStatusBadge(user.account_status || 'approved')}`}>
+                          {user.account_status || 'approved'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           user.is_active
                             ? 'bg-green-100 text-green-800'
@@ -110,31 +154,62 @@ export function UsersPage() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => setEditingUser(user)}
-                            className="p-1 text-blue-600 hover:bg-blue-50 rounded"
-                            title="Edit User"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setResettingPasswordUser(user)}
-                            className="p-1 text-gray-600 hover:bg-gray-100 rounded"
-                            title="Reset Password"
-                          >
-                            <Lock className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleToggleActive(user)}
-                            className={`p-1 ${
-                              user.is_active
-                                ? 'text-red-600 hover:bg-red-50'
-                                : 'text-green-600 hover:bg-green-50'
-                            } rounded`}
-                            title={user.is_active ? 'Deactivate' : 'Activate'}
-                          >
-                            <Power className="w-4 h-4" />
-                          </button>
+                          {user.account_status === 'pending' && (
+                            <>
+                              <button
+                                onClick={() => handleApproveUser(user)}
+                                className="p-1 text-green-600 hover:bg-green-50 rounded"
+                                title="Approve User"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleRejectUser(user)}
+                                className="p-1 text-red-600 hover:bg-red-50 rounded"
+                                title="Reject User"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                          {user.account_status === 'rejected' && (
+                            <button
+                              onClick={() => handleApproveUser(user)}
+                              className="p-1 text-green-600 hover:bg-green-50 rounded"
+                              title="Approve User"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                          {user.account_status === 'approved' && (
+                            <>
+                              <button
+                                onClick={() => setEditingUser(user)}
+                                className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                                title="Edit User"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => setResettingPasswordUser(user)}
+                                className="p-1 text-gray-600 hover:bg-gray-100 rounded"
+                                title="Reset Password"
+                              >
+                                <Lock className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleToggleActive(user)}
+                                className={`p-1 ${
+                                  user.is_active
+                                    ? 'text-red-600 hover:bg-red-50'
+                                    : 'text-green-600 hover:bg-green-50'
+                                } rounded`}
+                                title={user.is_active ? 'Deactivate' : 'Activate'}
+                              >
+                                <Power className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

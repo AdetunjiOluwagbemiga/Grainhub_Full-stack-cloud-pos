@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { LogIn, UserPlus } from 'lucide-react';
+import { LogIn, UserPlus, Clock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../ui/Button';
@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 export function LoginPage() {
   const { signIn } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isPending, setIsPending] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -50,13 +51,17 @@ export function LoginPage() {
             full_name: fullName,
             role: 'cashier',
             is_active: true,
+            account_status: 'pending',
           });
 
         if (profileError) throw profileError;
 
-        toast.success('Account created successfully! Please sign in.');
+        // Sign out the user immediately after signup
+        await supabase.auth.signOut();
+
+        toast.success('Account created! Waiting for admin approval.');
+        setIsPending(true);
         setIsSignUp(false);
-        setPassword('');
       }
     } catch (error) {
       toast.error((error as Error).message || 'Failed to create account');
@@ -64,6 +69,40 @@ export function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDEzNEgxNHY0aDIydi00em0wLTEwMEgxNHY0aDIyVjM0em0wIDUwSDE0djRoMjJ2LTR6bTAgNTBIMTR2NGgyMnYtNHoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
+
+        <Card className="w-full max-w-md relative z-10 backdrop-blur-sm bg-white/95">
+          <CardContent className="py-12 px-8 text-center">
+            <div className="mb-6 flex justify-center">
+              <div className="bg-yellow-100 p-4 rounded-full">
+                <Clock className="w-12 h-12 text-yellow-600" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Account Pending Approval
+            </h2>
+            <p className="text-gray-600 mb-2 text-base leading-relaxed">
+              Your account has been created successfully and is waiting for administrator approval.
+            </p>
+            <p className="text-gray-600 mb-8 text-base leading-relaxed">
+              Please contact your system administrator to approve your account. You will be able to sign in once your account is approved.
+            </p>
+            <Button
+              onClick={() => setIsPending(false)}
+              variant="outline"
+              className="w-full"
+            >
+              Back to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900 flex items-center justify-center p-4 relative overflow-hidden">
