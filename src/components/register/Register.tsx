@@ -23,6 +23,7 @@ export function Register() {
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [showSummary, setShowSummary] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -647,9 +648,21 @@ export function Register() {
           )}
         </div>
 
-        <div className="w-full lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col">
-          <div className="p-4 sm:p-6 flex-1">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
+        <div className={`fixed lg:static inset-0 z-40 lg:w-96 bg-white flex flex-col transition-transform duration-300 lg:border-l border-gray-200 ${
+          showSummary ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'
+        }`}>
+          <div className="lg:hidden flex items-center justify-between p-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Order Summary</h2>
+            <button
+              onClick={() => setShowSummary(false)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <Plus className="w-6 h-6 rotate-45" />
+            </button>
+          </div>
+
+          <div className="p-4 sm:p-6 flex-1 overflow-auto">
+            <h2 className="hidden lg:block text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
 
             <div className="space-y-3">
               <div className="flex justify-between text-gray-600">
@@ -705,6 +718,19 @@ export function Register() {
             </Button>
           </div>
         </div>
+
+        {cart.length > 0 && (
+          <button
+            onClick={() => setShowSummary(true)}
+            className="lg:hidden fixed bottom-4 right-4 z-50 bg-blue-600 text-white rounded-full shadow-lg p-4 flex items-center gap-2"
+          >
+            <ShoppingCart className="w-5 h-5" />
+            <div className="text-left">
+              <div className="text-xs">Total</div>
+              <div className="font-bold">{formatCurrency(total)}</div>
+            </div>
+          </button>
+        )}
       </div>
 
       <CheckoutModal

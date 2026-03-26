@@ -215,11 +215,11 @@ export function CheckoutModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Checkout" size="lg">
-      <div className="grid grid-cols-2 gap-6">
-        <div>
-          <h3 className="font-semibold text-gray-900 mb-4">Order Summary</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+        <div className="order-2 lg:order-1">
+          <h3 className="font-semibold text-gray-900 mb-3 lg:mb-4">Order Summary</h3>
 
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2 mb-4 max-h-48 lg:max-h-none overflow-y-auto">
             {cart.map((item, index) => (
               <div key={index} className="flex justify-between text-sm">
                 <span className="text-gray-600">
@@ -230,29 +230,29 @@ export function CheckoutModal({
             ))}
           </div>
 
-          <div className="border-t border-gray-200 pt-4 space-y-2">
-            <div className="flex justify-between text-gray-600">
+          <div className="border-t border-gray-200 pt-3 lg:pt-4 space-y-2">
+            <div className="flex justify-between text-sm lg:text-base text-gray-600">
               <span>Subtotal</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
             {discount > 0 && (
-              <div className="flex justify-between text-green-600">
+              <div className="flex justify-between text-sm lg:text-base text-green-600">
                 <span>Discount</span>
                 <span>-{formatCurrency(discount)}</span>
               </div>
             )}
-            <div className="flex justify-between text-gray-600">
+            <div className="flex justify-between text-sm lg:text-base text-gray-600">
               <span>Tax</span>
               <span>{formatCurrency(tax)}</span>
             </div>
-            <div className="flex justify-between text-xl font-bold text-gray-900 pt-2 border-t border-gray-200">
+            <div className="flex justify-between text-lg lg:text-xl font-bold text-gray-900 pt-2 border-t border-gray-200">
               <span>Total</span>
               <span>{formatCurrency(total)}</span>
             </div>
           </div>
         </div>
 
-        <div>
+        <div className="order-1 lg:order-2">
           <h3 className="font-semibold text-gray-900 mb-4">Payment</h3>
 
           <Card className="mb-4">
@@ -330,16 +330,16 @@ export function CheckoutModal({
             </div>
           )}
 
-          <div className="bg-blue-50 rounded-lg p-4 mb-4 space-y-2">
-            <div className="flex justify-between text-gray-700">
+          <div className="bg-blue-50 rounded-lg p-3 lg:p-4 mb-4 space-y-2">
+            <div className="flex justify-between text-sm lg:text-base text-gray-700">
               <span>Total</span>
               <span className="font-semibold">{formatCurrency(total)}</span>
             </div>
-            <div className="flex justify-between text-gray-700">
+            <div className="flex justify-between text-sm lg:text-base text-gray-700">
               <span>Paid</span>
               <span className="font-semibold">{formatCurrency(totalPaid)}</span>
             </div>
-            <div className="flex justify-between text-lg font-bold text-blue-600 pt-2 border-t border-blue-200">
+            <div className="flex justify-between text-base lg:text-lg font-bold text-blue-600 pt-2 border-t border-blue-200">
               <span>{remaining > 0 ? 'Remaining' : 'Change'}</span>
               <span>{formatCurrency(remaining > 0 ? remaining : change)}</span>
             </div>
@@ -353,42 +353,44 @@ export function CheckoutModal({
               onClick={handleCompleteSale}
               disabled={totalPaid < total || processing || payments.length === 0}
             >
-              <CheckCircle className="w-5 h-5 mr-2" />
+              <CheckCircle className="w-4 h-4 lg:w-5 lg:h-5 mr-2" />
               {processing ? 'Processing...' : 'Complete Payment'}
             </Button>
           ) : (
             <div className="space-y-3">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                <CheckCircle className="w-12 h-12 mx-auto text-green-600 mb-2" />
-                <h4 className="text-lg font-semibold text-green-900">Payment Completed!</h4>
-                <p className="text-sm text-green-700 mt-1">
+                <CheckCircle className="w-10 h-10 lg:w-12 lg:h-12 mx-auto text-green-600 mb-2" />
+                <h4 className="text-base lg:text-lg font-semibold text-green-900">Payment Completed!</h4>
+                <p className="text-xs lg:text-sm text-green-700 mt-1">
                   Sale #{completedSaleData?.sale_number}
                 </p>
                 {change > 0 && (
-                  <p className="text-lg font-bold text-green-900 mt-2">
+                  <p className="text-base lg:text-lg font-bold text-green-900 mt-2">
                     Change Due: {formatCurrency(change)}
                   </p>
                 )}
               </div>
 
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2 lg:gap-3">
                   <Button
                     variant="outline"
                     size="lg"
                     onClick={handlePrintReceipt}
+                    className="text-sm lg:text-base"
                   >
-                    <Printer className="w-5 h-5 mr-2" />
-                    Print
+                    <Printer className="w-4 h-4 lg:w-5 lg:h-5 lg:mr-2" />
+                    <span className="hidden lg:inline">Print</span>
                   </Button>
 
                   <Button
                     variant="outline"
                     size="lg"
                     onClick={handleDownloadReceipt}
+                    className="text-sm lg:text-base"
                   >
-                    <Download className="w-5 h-5 mr-2" />
-                    Download
+                    <Download className="w-4 h-4 lg:w-5 lg:h-5 lg:mr-2" />
+                    <span className="hidden lg:inline">Download</span>
                   </Button>
                 </div>
 
