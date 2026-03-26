@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { Package, AlertTriangle, Plus, Minus, Download, Upload, FileDown } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Package, AlertTriangle, Plus, Minus, Download, Upload, FileDown, Search } from 'lucide-react';
 import { useInventory, useLowStockItems, useStockAdjustment } from '../../hooks/useInventory';
 import { useInventoryValuation } from '../../hooks/useValuation';
 import { Button } from '../ui/Button';
@@ -21,6 +21,7 @@ export function InventoryPage() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [defaultLocationId, setDefaultLocationId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const isLoading = rawLoading || valuationLoading;
 
@@ -48,6 +49,20 @@ export function InventoryPage() {
 
     fetchDefaultLocation();
   }, []);
+
+  const filteredInventory = useMemo(() => {
+    if (!groupedInventory) return [];
+    if (!searchQuery.trim()) return groupedInventory;
+
+    const query = searchQuery.toLowerCase();
+    return groupedInventory.filter((item: any) => {
+      return (
+        item.product_name?.toLowerCase().includes(query) ||
+        item.sku?.toLowerCase().includes(query) ||
+        item.category_name?.toLowerCase().includes(query)
+      );
+    });
+  }, [groupedInventory, searchQuery]);
 
   const handleAdjustment = async () => {
     if (!selectedItem || !adjustment.quantity_change) {
@@ -144,21 +159,34 @@ export function InventoryPage() {
   return (
     <div className="h-full flex flex-col bg-gray-50">
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Inventory Management</h1>
-          <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={handleDownloadTemplate} size="sm" className="flex-1 sm:flex-none">
-              <FileDown className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Download Template</span>
-            </Button>
-            <Button variant="secondary" onClick={handleImportClick} disabled={importing} size="sm" className="flex-1 sm:flex-none">
-              <Upload className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">{importing ? 'Importing...' : 'Import Excel'}</span>
-            </Button>
-            <Button variant="secondary" onClick={handleExport} size="sm" className="flex-1 sm:flex-none">
-              <Download className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Export Excel</span>
-            </Button>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Inventory Management</h1>
+            <div className="flex flex-wrap gap-2">
+              <Button variant="secondary" onClick={handleDownloadTemplate} size="sm" className="flex-1 sm:flex-none">
+                <FileDown className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Download Template</span>
+              </Button>
+              <Button variant="secondary" onClick={handleImportClick} disabled={importing} size="sm" className="flex-1 sm:flex-none">
+                <Upload className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">{importing ? 'Importing...' : 'Import Excel'}</span>
+              </Button>
+              <Button variant="secondary" onClick={handleExport} size="sm" className="flex-1 sm:flex-none">
+                <Download className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Export Excel</span>
+              </Button>
+            </div>
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by product name, SKU, or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
         </div>
       </div>
@@ -198,7 +226,7 @@ export function InventoryPage() {
         )}
 
         <div className="grid grid-cols-1 gap-4">
-          {groupedInventory?.map((item: any) => (
+          {filteredInventory?.map((item: any) => (
             <Card key={item.product_id}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -286,11 +314,13 @@ export function InventoryPage() {
             </Card>
           ))}
 
-          {groupedInventory?.length === 0 && (
+          {filteredInventory?.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center">
                 <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-600">No inventory items found</p>
+                <p className="text-gray-600">
+                  {searchQuery ? 'No inventory items match your search' : 'No inventory items found'}
+                </p>
               </CardContent>
             </Card>
           )}
