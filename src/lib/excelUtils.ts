@@ -10,6 +10,8 @@ export interface ProductExcelRow {
   'Retail Price': number;
   'Tax Rate (%)': number;
   'Unit of Measure': string;
+  'Expiry Date'?: string;
+  'Alert Days Before Expiry'?: number;
 }
 
 export async function exportProductsToExcel(products: any[]) {
@@ -22,6 +24,8 @@ export async function exportProductsToExcel(products: any[]) {
     'Retail Price': product.retail_price,
     'Tax Rate (%)': product.tax_rate,
     'Unit of Measure': product.unit_of_measure,
+    'Expiry Date': product.expiry_date || '',
+    'Alert Days Before Expiry': product.alert_days_before_expiry || 7,
   }));
 
   const worksheet = XLSX.utils.json_to_sheet(data);
@@ -35,6 +39,8 @@ export async function exportProductsToExcel(products: any[]) {
     { wch: 12 },
     { wch: 12 },
     { wch: 15 },
+    { wch: 15 },
+    { wch: 20 },
   ];
   worksheet['!cols'] = colWidths;
 
@@ -119,6 +125,8 @@ export async function importProductsFromExcel(
               retail_price: row['Retail Price'],
               tax_rate: row['Tax Rate (%)'] || 0,
               unit_of_measure: row['Unit of Measure'] || 'piece',
+              expiry_date: row['Expiry Date'] || null,
+              alert_days_before_expiry: row['Alert Days Before Expiry'] || 7,
               category_id: null,
               has_variants: false,
               track_inventory: true,
@@ -226,6 +234,8 @@ export function downloadExcelTemplate() {
       'Retail Price': 20.00,
       'Tax Rate (%)': 15,
       'Unit of Measure': 'piece',
+      'Expiry Date': '2024-12-31',
+      'Alert Days Before Expiry': 7,
     },
     {
       SKU: '',
@@ -236,6 +246,8 @@ export function downloadExcelTemplate() {
       'Retail Price': 12.00,
       'Tax Rate (%)': 15,
       'Unit of Measure': 'piece',
+      'Expiry Date': '',
+      'Alert Days Before Expiry': 7,
     },
   ];
 
@@ -250,6 +262,8 @@ export function downloadExcelTemplate() {
     { wch: 12 },
     { wch: 12 },
     { wch: 15 },
+    { wch: 15 },
+    { wch: 20 },
   ];
   worksheet['!cols'] = colWidths;
 
