@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   PieChart,
   Database,
+  Calendar,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useActiveShift } from '../../hooks/useShifts';
@@ -41,6 +42,7 @@ export function MainLayout({ children, activeTab, onTabChange }: MainLayoutProps
     { id: 'register', name: 'Register', icon: ShoppingCart, roles: ['admin', 'manager', 'cashier'] },
     { id: 'products', name: 'Products', icon: Package, roles: ['admin', 'manager'] },
     { id: 'inventory', name: 'Inventory', icon: Package, roles: ['admin', 'manager'] },
+    { id: 'expiry', name: 'Expiry Tracking', icon: Calendar, roles: ['admin', 'manager'] },
     { id: 'valuation', name: 'Valuation', icon: PieChart, roles: ['admin', 'manager'] },
     { id: 'suppliers', name: 'Suppliers', icon: Truck, roles: ['admin', 'manager'] },
     { id: 'purchase-orders', name: 'Purchase Orders', icon: ShoppingBag, roles: ['admin', 'manager'] },

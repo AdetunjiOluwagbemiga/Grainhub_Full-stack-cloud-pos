@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { Plus, Search, CreditCard as Edit, Trash2, Barcode as BarcodeIcon, Download, Upload, FileDown } from 'lucide-react';
+import { Plus, Search, CreditCard as Edit, Trash2, Barcode as BarcodeIcon, Download, Upload, FileDown, AlertTriangle } from 'lucide-react';
+import { differenceInDays } from 'date-fns';
 import { useProducts, useCreateProduct, useUpdateProduct, useGenerateBarcode, useDeleteProducts } from '../../hooks/useProducts';
 import { useCategories } from '../../hooks/useCategories';
 import { Button } from '../ui/Button';
@@ -46,6 +47,8 @@ export function ProductsPage() {
     is_weighed: false,
     is_quick_sale: false,
     initial_quantity: '',
+    expiry_date: '',
+    alert_days_before_expiry: '7',
   });
 
   const filteredProducts = products?.filter(p =>
@@ -55,7 +58,7 @@ export function ProductsPage() {
 
   const handleSubmit = async () => {
     try {
-      const { initial_quantity, ...formDataWithoutQuantity } = formData;
+      const { initial_quantity, alert_days_before_expiry, ...formDataWithoutQuantity } = formData;
 
       const productData = {
         ...formDataWithoutQuantity,
@@ -65,6 +68,8 @@ export function ProductsPage() {
         tax_rate: parseFloat(formData.tax_rate),
         category_id: formData.category_id || null,
         barcode: formData.barcode || null,
+        expiry_date: formData.expiry_date || null,
+        alert_days_before_expiry: formData.alert_days_before_expiry ? parseInt(formData.alert_days_before_expiry) : 7,
         has_variants: false,
         track_inventory: true,
         is_active: true,
@@ -104,6 +109,8 @@ export function ProductsPage() {
       is_weighed: false,
       is_quick_sale: false,
       initial_quantity: '',
+      expiry_date: '',
+      alert_days_before_expiry: '7',
     });
   };
 
@@ -122,6 +129,9 @@ export function ProductsPage() {
       category_id: product.category_id || '',
       is_weighed: product.is_weighed || false,
       is_quick_sale: product.is_quick_sale || false,
+      initial_quantity: '',
+      expiry_date: product.expiry_date || '',
+      alert_days_before_expiry: product.alert_days_before_expiry?.toString() || '7',
     });
     setCreateModalOpen(true);
   };
@@ -340,21 +350,41 @@ export function ProductsPage() {
         </Card>
 
         <div className="grid grid-cols-1 gap-4">
-          {filteredProducts?.map((product) => (
-            <Card key={product.id}>
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex items-start gap-3">
-                  <label className="flex items-center cursor-pointer mt-1">
-                    <input
-                      type="checkbox"
-                      checked={selectedProducts.includes(product.id)}
-                      onChange={() => toggleSelectProduct(product.id)}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                  </label>
-                  <div className="flex-1">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900">{product.name}</h3>
-                    <p className="text-sm text-gray-600 mt-1">SKU: {product.sku}</p>
+          {filteredProducts?.map((product) => {
+            const daysUntilExpiry = product.expiry_date
+              ? differenceInDays(new Date(product.expiry_date), new Date())
+              : null;
+            const isExpired = daysUntilExpiry !== null && daysUntilExpiry < 0;
+            const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry >= 0 && daysUntilExpiry <= 7;
+            const isExpiringWarning = daysUntilExpiry !== null && daysUntilExpiry > 7 && daysUntilExpiry <= 30;
+
+            return (
+              <Card key={product.id} className={`${isExpired ? 'border-red-300 bg-red-50' : isExpiringSoon ? 'border-orange-300 bg-orange-50' : isExpiringWarning ? 'border-yellow-300 bg-yellow-50' : ''}`}>
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex items-start gap-3">
+                    <label className="flex items-center cursor-pointer mt-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedProducts.includes(product.id)}
+                        onChange={() => toggleSelectProduct(product.id)}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      />
+                    </label>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900">{product.name}</h3>
+                        {(isExpired || isExpiringSoon || isExpiringWarning) && (
+                          <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            isExpired ? 'bg-red-100 text-red-800' :
+                            isExpiringSoon ? 'bg-orange-100 text-orange-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            <AlertTriangle className="w-3 h-3" />
+                            {isExpired ? 'Expired' : isExpiringSoon ? `${daysUntilExpiry}d left` : `${daysUntilExpiry}d left`}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">SKU: {product.sku}</p>
                     {product.description && (
                       <p className="text-sm text-gray-600 mt-2">{product.description}</p>
                     )}
@@ -410,7 +440,8 @@ export function ProductsPage() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
 
           {filteredProducts?.length === 0 && (
             <Card>
@@ -544,6 +575,29 @@ export function ProductsPage() {
               </p>
             </div>
           )}
+
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-amber-900 mb-3">Expiry Tracking (Optional)</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Expiry Date"
+                type="date"
+                value={formData.expiry_date}
+                onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
+              />
+              <Input
+                label="Alert Days Before Expiry"
+                type="number"
+                min="1"
+                value={formData.alert_days_before_expiry}
+                onChange={(e) => setFormData({ ...formData, alert_days_before_expiry: e.target.value })}
+                placeholder="7"
+              />
+            </div>
+            <p className="text-xs text-amber-700 mt-2">
+              Set an expiry date to track when this product expires. The system will alert you based on the days specified.
+            </p>
+          </div>
 
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
             <label className="flex items-center gap-2 cursor-pointer">
