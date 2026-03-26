@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Scan, ShoppingCart, Trash2, Plus, Minus, Tag, User, Search, CreditCard as Edit2, AlertCircle } from 'lucide-react';
+import { Scan, ShoppingCart, Trash2, Plus, Minus, Tag, User, Search, CreditCard as Edit2, AlertCircle, Grid3x3 } from 'lucide-react';
 import { useProducts, useProductByBarcode } from '../../hooks/useProducts';
 import { usePaymentMethods } from '../../hooks/useSales';
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
 import { useActiveShift } from '../../hooks/useShifts';
+import { useCategories } from '../../hooks/useCategories';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -21,15 +22,21 @@ export function Register() {
   const [editQuantity, setEditQuantity] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: products, isLoading: productsLoading } = useProducts();
+  const { data: categories } = useCategories();
   const { formatCurrency } = useCurrency();
   const { data: paymentMethods } = usePaymentMethods();
   const { data: activeShift } = useActiveShift();
 
   const quickSaleProducts = products?.filter(p => p.is_quick_sale) || [];
+
+  const productsToShow = selectedCategoryId
+    ? products?.filter(p => p.category_id === selectedCategoryId)
+    : products;
 
   const playBeep = () => {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -419,15 +426,82 @@ export function Register() {
           )}
 
           {cart.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <ShoppingCart className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-                <p className="text-gray-600 text-lg">Cart is empty</p>
-                <p className="text-gray-500 text-sm mt-2">
-                  Scan a barcode or search for products to add to cart
-                </p>
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <Grid3x3 className="w-4 h-4" />
+                      Browse Products
+                    </h3>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    <Button
+                      variant={selectedCategoryId === null ? 'primary' : 'secondary'}
+                      size="sm"
+                      onClick={() => setSelectedCategoryId(null)}
+                    >
+                      All Products
+                    </Button>
+                    {categories?.map((category) => (
+                      <Button
+                        key={category.id}
+                        variant={selectedCategoryId === category.id ? 'primary' : 'secondary'}
+                        size="sm"
+                        onClick={() => setSelectedCategoryId(category.id)}
+                      >
+                        {category.name}
+                      </Button>
+                    ))}
+                  </div>
+
+                  {productsLoading ? (
+                    <div className="text-center py-8 text-gray-500">Loading products...</div>
+                  ) : productsToShow && productsToShow.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 max-h-[500px] overflow-y-auto">
+                      {productsToShow.map((product) => (
+                        <button
+                          key={product.id}
+                          onClick={() => addToCart(product)}
+                          disabled={!product.current_stock || product.current_stock <= 0}
+                          className="bg-white border border-gray-200 rounded-lg p-3 hover:border-blue-500 hover:shadow-md transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:shadow-none"
+                        >
+                          <div className="flex flex-col h-full">
+                            <h4 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2">
+                              {product.name}
+                            </h4>
+                            <p className="text-xs text-gray-500 mb-2">{product.sku}</p>
+                            <div className="mt-auto">
+                              <p className="font-semibold text-blue-600 mb-1">
+                                {formatCurrency(product.retail_price)}
+                              </p>
+                              <p className={`text-xs ${
+                                !product.current_stock || product.current_stock <= 0
+                                  ? 'text-red-600 font-medium'
+                                  : product.current_stock < 10
+                                  ? 'text-orange-600'
+                                  : 'text-gray-500'
+                              }`}>
+                                {!product.current_stock || product.current_stock <= 0
+                                  ? 'Out of stock'
+                                  : `Stock: ${product.current_stock}`
+                                }
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      No products found in this category
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           ) : (
             <>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
