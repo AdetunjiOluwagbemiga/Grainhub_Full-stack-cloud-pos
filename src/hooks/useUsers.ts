@@ -9,6 +9,7 @@ export interface UserProfile {
   role: 'admin' | 'manager' | 'cashier';
   pin_code?: string;
   is_active: boolean;
+  account_status: 'pending' | 'approved' | 'rejected';
   last_login_at?: string;
   created_at: string;
   updated_at: string;
