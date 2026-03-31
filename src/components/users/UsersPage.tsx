@@ -54,11 +54,7 @@ export function UsersPage() {
       return;
     }
 
-    try {
-      await permanentDeleteUser.mutateAsync(user.id);
-    } catch (error) {
-      console.error('Delete error:', error);
-    }
+    await permanentDeleteUser.mutateAsync(user.id);
   };
 
   const getRoleBadgeColor = (role: string) => {
