@@ -140,6 +140,47 @@ export function useDeleteUser() {
   });
 }
 
+export function usePermanentDeleteUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete user');
+      }
+
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User permanently deleted');
+    },
+    onError: (error: Error) => {
+      console.error('Error deleting user:', error);
+      toast.error(error.message || 'Failed to delete user');
+    },
+  });
+}
+
 export function useResetPassword() {
   return useMutation({
     mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {

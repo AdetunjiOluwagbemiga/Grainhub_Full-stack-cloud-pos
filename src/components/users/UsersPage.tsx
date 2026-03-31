@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Users, UserPlus, CreditCard as Edit2, Lock, Power, Check, X } from 'lucide-react';
+import { Users, UserPlus, CreditCard as Edit2, Lock, Power, Check, X, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '../ui/Card';
 import { Button } from '../ui/Button';
-import { useUsers, useUpdateUser, useDeleteUser } from '../../hooks/useUsers';
+import { useUsers, useUpdateUser, useDeleteUser, usePermanentDeleteUser } from '../../hooks/useUsers';
 import { CreateUserModal } from './CreateUserModal';
 import { EditUserModal } from './EditUserModal';
 import { ResetPasswordModal } from './ResetPasswordModal';
@@ -13,6 +13,7 @@ export function UsersPage() {
   const { data: users, isLoading } = useUsers();
   const updateUser = useUpdateUser();
   const deleteUser = useDeleteUser();
+  const permanentDeleteUser = usePermanentDeleteUser();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [resettingPasswordUser, setResettingPasswordUser] = useState<UserProfile | null>(null);
@@ -45,6 +46,18 @@ export function UsersPage() {
       toast.success(`${user.full_name}'s account has been rejected`);
     } catch (error) {
       toast.error('Failed to reject user');
+    }
+  };
+
+  const handlePermanentDelete = async (user: UserProfile) => {
+    if (!confirm(`Are you sure you want to permanently delete ${user.full_name}? This action cannot be undone and will remove all user data from the system.`)) {
+      return;
+    }
+
+    try {
+      await permanentDeleteUser.mutateAsync(user.id);
+    } catch (error) {
+      console.error('Delete error:', error);
     }
   };
 
@@ -210,6 +223,13 @@ export function UsersPage() {
                               </button>
                             </>
                           )}
+                          <button
+                            onClick={() => handlePermanentDelete(user)}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                            title="Permanently Delete User"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
