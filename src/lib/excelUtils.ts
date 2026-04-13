@@ -66,10 +66,16 @@ export async function importProductsFromExcel(
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
 
-        const jsonData = XLSX.utils.sheet_to_json<ProductExcelRow>(worksheet, {
+        let jsonData = XLSX.utils.sheet_to_json<ProductExcelRow>(worksheet, {
           defval: '',
           blankrows: false
-        }).filter(row => row.Name && row.Name.toString().trim() !== '');
+        });
+
+        jsonData = jsonData.filter(row => {
+          const name = row.Name ? String(row.Name).trim() : '';
+          const retailPrice = row['Retail Price'];
+          return name !== '' && retailPrice !== undefined && retailPrice !== null && retailPrice !== '';
+        });
 
         const errors: string[] = [];
         let createdCount = 0;
@@ -87,57 +93,71 @@ export async function importProductsFromExcel(
           return;
         }
 
-        const batchSize = 20;
+        const batchSize = 10;
 
         for (let batchStart = 0; batchStart < jsonData.length; batchStart += batchSize) {
           const batchEnd = Math.min(batchStart + batchSize, jsonData.length);
           const batch = jsonData.slice(batchStart, batchEnd);
 
           const skuMap = new Map<string, any>();
-          const productNames = batch.map(row => row.Name).filter(Boolean);
+          const productNames = batch.map(row => String(row.Name || '').trim()).filter(Boolean);
 
           if (productNames.length > 0) {
-            const { data: existingProducts } = await supabase
-              .from('products')
-              .select('id, sku, name')
-              .in('name', productNames);
+            try {
+              const { data: existingProducts, error: fetchError } = await supabase
+                .from('products')
+                .select('id, sku, name')
+                .in('name', productNames);
 
-            existingProducts?.forEach(prod => {
-              skuMap.set(prod.name.toLowerCase(), prod);
-            });
+              if (fetchError) throw fetchError;
+
+              existingProducts?.forEach(prod => {
+                skuMap.set(prod.name.toLowerCase(), prod);
+              });
+            } catch (error: any) {
+              errors.push(`Batch lookup error: ${error.message}`);
+            }
           }
 
           for (let i = batchStart; i < batchEnd; i++) {
             const row = jsonData[i];
             const rowNum = i + 2;
             let sku = row.SKU ? String(row.SKU).trim() : '';
+            const name = String(row.Name || '').trim();
+            const retailPrice = row['Retail Price'];
 
             try {
-              if (!row.Name || !row['Retail Price']) {
+              if (!name || retailPrice === undefined || retailPrice === null || retailPrice === '') {
                 errors.push(`Row ${rowNum}: Missing required fields (Name or Retail Price)`);
                 continue;
               }
 
-              const existingByName = skuMap.get(row.Name.toLowerCase());
+              const numRetailPrice = Number(retailPrice);
+              if (isNaN(numRetailPrice)) {
+                errors.push(`Row ${rowNum}: Invalid retail price value`);
+                continue;
+              }
+
+              const existingByName = skuMap.get(name.toLowerCase());
 
               if (existingByName) {
                 sku = existingByName.sku;
               } else {
                 if (!sku || sku === '') {
-                  sku = `AUTO-${Date.now()}-${i}`;
+                  sku = `AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                 }
               }
 
               const productData = {
                 sku: sku,
-                name: row.Name,
-                description: row.Description || null,
-                cost_price: row['Cost Price'] || 0,
-                retail_price: row['Retail Price'],
-                tax_rate: row['Tax Rate (%)'] || 0,
-                unit_of_measure: row['Unit of Measure'] || 'piece',
-                expiry_date: row['Expiry Date'] || null,
-                alert_days_before_expiry: row['Alert Days Before Expiry'] || 7,
+                name: name,
+                description: row.Description ? String(row.Description).trim() : null,
+                cost_price: row['Cost Price'] ? Number(row['Cost Price']) : 0,
+                retail_price: numRetailPrice,
+                tax_rate: row['Tax Rate (%)'] ? Number(row['Tax Rate (%)']) : 0,
+                unit_of_measure: row['Unit of Measure'] ? String(row['Unit of Measure']).trim() : 'piece',
+                expiry_date: row['Expiry Date'] ? String(row['Expiry Date']).trim() : null,
+                alert_days_before_expiry: row['Alert Days Before Expiry'] ? Number(row['Alert Days Before Expiry']) : 7,
                 category_id: null,
                 has_variants: false,
                 track_inventory: true,
@@ -169,7 +189,7 @@ export async function importProductsFromExcel(
                 productId = newProduct.id;
               }
 
-              const currentStock = row['Current Stock'] !== undefined ? row['Current Stock'] : 0;
+              const currentStock = row['Current Stock'] !== undefined ? Number(row['Current Stock']) : 0;
 
               const { data: existingInventory } = await supabase
                 .from('inventory')
@@ -205,7 +225,8 @@ export async function importProductsFromExcel(
                 createdCount++;
               }
             } catch (error: any) {
-              errors.push(`Row ${rowNum} (${sku}): ${error.message}`);
+              console.error(`Row ${rowNum} error:`, error);
+              errors.push(`Row ${rowNum} (${sku || 'N/A'}): ${error.message}`);
             }
 
             if (onProgress) {
@@ -213,7 +234,7 @@ export async function importProductsFromExcel(
             }
           }
 
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
 
         resolve({ success: createdCount + updatedCount, created: createdCount, updated: updatedCount, errors });
