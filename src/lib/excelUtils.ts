@@ -62,10 +62,14 @@ export async function importProductsFromExcel(
     reader.onload = async (e) => {
       try {
         const data = e.target?.result;
-        const workbook = XLSX.read(data, { type: 'binary' });
+        const workbook = XLSX.read(data, { type: 'binary', defval: '' });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json<ProductExcelRow>(worksheet);
+
+        const jsonData = XLSX.utils.sheet_to_json<ProductExcelRow>(worksheet, {
+          defval: '',
+          blankrows: false
+        }).filter(row => row.Name && row.Name.toString().trim() !== '');
 
         const errors: string[] = [];
         let createdCount = 0;
@@ -83,130 +87,133 @@ export async function importProductsFromExcel(
           return;
         }
 
-        for (let i = 0; i < jsonData.length; i++) {
-          const row = jsonData[i];
-          const rowNum = i + 2;
-          let sku = row.SKU ? String(row.SKU) : '';
+        const batchSize = 20;
 
-          try {
-            if (!row.Name || !row['Retail Price']) {
-              errors.push(`Row ${rowNum}: Missing required fields (Name or Retail Price)`);
-              continue;
-            }
+        for (let batchStart = 0; batchStart < jsonData.length; batchStart += batchSize) {
+          const batchEnd = Math.min(batchStart + batchSize, jsonData.length);
+          const batch = jsonData.slice(batchStart, batchEnd);
 
-            // Check for existing product by name first (case-insensitive)
-            const existingByName = await supabase
+          const skuMap = new Map<string, any>();
+          const productNames = batch.map(row => row.Name).filter(Boolean);
+
+          if (productNames.length > 0) {
+            const { data: existingProducts } = await supabase
               .from('products')
               .select('id, sku, name')
-              .ilike('name', row.Name)
-              .maybeSingle();
+              .in('name', productNames);
 
-            // If product exists by name, use its SKU and update it
-            if (existingByName.data) {
-              sku = existingByName.data.sku;
-            } else {
-              // Generate SKU if not provided
-              if (!sku || sku.trim() === '') {
-                sku = `AUTO-${Date.now()}-${i}`;
+            existingProducts?.forEach(prod => {
+              skuMap.set(prod.name.toLowerCase(), prod);
+            });
+          }
+
+          for (let i = batchStart; i < batchEnd; i++) {
+            const row = jsonData[i];
+            const rowNum = i + 2;
+            let sku = row.SKU ? String(row.SKU).trim() : '';
+
+            try {
+              if (!row.Name || !row['Retail Price']) {
+                errors.push(`Row ${rowNum}: Missing required fields (Name or Retail Price)`);
+                continue;
               }
-            }
 
-            const existingProduct = await supabase
-              .from('products')
-              .select('id')
-              .eq('sku', sku)
-              .maybeSingle();
+              const existingByName = skuMap.get(row.Name.toLowerCase());
 
-            const productData = {
-              sku: sku,
-              name: row.Name,
-              description: row.Description || null,
-              cost_price: row['Cost Price'] || 0,
-              retail_price: row['Retail Price'],
-              tax_rate: row['Tax Rate (%)'] || 0,
-              unit_of_measure: row['Unit of Measure'] || 'piece',
-              expiry_date: row['Expiry Date'] || null,
-              alert_days_before_expiry: row['Alert Days Before Expiry'] || 7,
-              category_id: null,
-              has_variants: false,
-              track_inventory: true,
-              is_active: true,
-              image_url: null,
-              created_by: userId,
-            };
+              if (existingByName) {
+                sku = existingByName.sku;
+              } else {
+                if (!sku || sku === '') {
+                  sku = `AUTO-${Date.now()}-${i}`;
+                }
+              }
 
-            let productId: string;
-            let isUpdate = false;
+              const productData = {
+                sku: sku,
+                name: row.Name,
+                description: row.Description || null,
+                cost_price: row['Cost Price'] || 0,
+                retail_price: row['Retail Price'],
+                tax_rate: row['Tax Rate (%)'] || 0,
+                unit_of_measure: row['Unit of Measure'] || 'piece',
+                expiry_date: row['Expiry Date'] || null,
+                alert_days_before_expiry: row['Alert Days Before Expiry'] || 7,
+                category_id: null,
+                has_variants: false,
+                track_inventory: true,
+                is_active: true,
+                image_url: null,
+                created_by: userId,
+              };
 
-            if (existingProduct.data) {
-              const { error } = await supabase
-                .from('products')
-                .update(productData)
-                .eq('id', existingProduct.data.id);
+              let productId: string;
+              let isUpdate = false;
 
-              if (error) throw error;
-              productId = existingProduct.data.id;
-              isUpdate = true;
-            } else {
-              const { data: newProduct, error } = await supabase
-                .from('products')
-                .insert([productData])
-                .select('id')
-                .single();
+              if (existingByName) {
+                const { error } = await supabase
+                  .from('products')
+                  .update(productData)
+                  .eq('id', existingByName.id);
 
-              if (error) throw error;
-              productId = newProduct.id;
-            }
+                if (error) throw error;
+                productId = existingByName.id;
+                isUpdate = true;
+              } else {
+                const { data: newProduct, error } = await supabase
+                  .from('products')
+                  .insert([productData])
+                  .select('id')
+                  .single();
 
-            // Update or create inventory record for the product
-            const currentStock = row['Current Stock'] !== undefined ? row['Current Stock'] : 0;
+                if (error) throw error;
+                productId = newProduct.id;
+              }
 
-            const { data: existingInventory } = await supabase
-              .from('inventory')
-              .select('id, quantity')
-              .eq('product_id', productId)
-              .eq('location_id', defaultLocation.id)
-              .maybeSingle();
+              const currentStock = row['Current Stock'] !== undefined ? row['Current Stock'] : 0;
 
-            if (existingInventory) {
-              // Update existing inventory
-              const { error: invError } = await supabase
+              const { data: existingInventory } = await supabase
                 .from('inventory')
-                .update({ quantity: currentStock })
-                .eq('id', existingInventory.id);
+                .select('id, quantity')
+                .eq('product_id', productId)
+                .eq('location_id', defaultLocation.id)
+                .maybeSingle();
 
-              if (invError) throw new Error(`Failed to update inventory: ${invError.message}`);
-            } else {
-              // Create new inventory record
-              const { error: invError } = await supabase
-                .from('inventory')
-                .insert([{
-                  product_id: productId,
-                  location_id: defaultLocation.id,
-                  quantity: currentStock,
-                  low_stock_threshold: 5,
-                  reorder_quantity: 10
-                }]);
+              if (existingInventory) {
+                const { error: invError } = await supabase
+                  .from('inventory')
+                  .update({ quantity: currentStock })
+                  .eq('id', existingInventory.id);
 
-              if (invError) throw new Error(`Failed to create inventory: ${invError.message}`);
+                if (invError) throw new Error(`Failed to update inventory: ${invError.message}`);
+              } else {
+                const { error: invError } = await supabase
+                  .from('inventory')
+                  .insert([{
+                    product_id: productId,
+                    location_id: defaultLocation.id,
+                    quantity: currentStock,
+                    low_stock_threshold: 5,
+                    reorder_quantity: 10
+                  }]);
+
+                if (invError) throw new Error(`Failed to create inventory: ${invError.message}`);
+              }
+
+              if (isUpdate) {
+                updatedCount++;
+              } else {
+                createdCount++;
+              }
+            } catch (error: any) {
+              errors.push(`Row ${rowNum} (${sku}): ${error.message}`);
             }
 
-            if (isUpdate) {
-              updatedCount++;
-            } else {
-              createdCount++;
+            if (onProgress) {
+              onProgress(i + 1, totalRows);
             }
-          } catch (error: any) {
-            errors.push(`Row ${rowNum} (${sku}): ${error.message}`);
           }
 
-          if (onProgress) {
-            onProgress(i + 1, totalRows);
-          }
-
-          if ((i + 1) % 50 === 0) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-          }
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
 
         resolve({ success: createdCount + updatedCount, created: createdCount, updated: updatedCount, errors });
