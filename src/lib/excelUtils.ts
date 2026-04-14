@@ -100,19 +100,24 @@ export async function importProductsFromExcel(
           const batch = jsonData.slice(batchStart, batchEnd);
 
           const skuMap = new Map<string, any>();
+          const inactiveSkuMap = new Map<string, any>();
           const productNames = batch.map(row => String(row.Name || '').trim()).filter(Boolean);
 
           if (productNames.length > 0) {
             try {
               const { data: existingProducts, error: fetchError } = await supabase
                 .from('products')
-                .select('id, sku, name')
+                .select('id, sku, name, is_active')
                 .in('name', productNames);
 
               if (fetchError) throw fetchError;
 
               existingProducts?.forEach(prod => {
-                skuMap.set(prod.name.toLowerCase(), prod);
+                if (prod.is_active) {
+                  skuMap.set(prod.name.toLowerCase(), prod);
+                } else {
+                  inactiveSkuMap.set(prod.name.toLowerCase(), prod);
+                }
               });
             } catch (error: any) {
               errors.push(`Batch lookup error: ${error.message}`);
@@ -139,9 +144,11 @@ export async function importProductsFromExcel(
               }
 
               const existingByName = skuMap.get(name.toLowerCase());
+              const inactiveByName = inactiveSkuMap.get(name.toLowerCase());
+              const matchedProduct = existingByName || inactiveByName;
 
-              if (existingByName) {
-                sku = existingByName.sku;
+              if (matchedProduct) {
+                sku = matchedProduct.sku;
               } else {
                 if (!sku || sku === '') {
                   sku = `AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -169,14 +176,14 @@ export async function importProductsFromExcel(
               let productId: string;
               let isUpdate = false;
 
-              if (existingByName) {
+              if (matchedProduct) {
                 const { error } = await supabase
                   .from('products')
                   .update(productData)
-                  .eq('id', existingByName.id);
+                  .eq('id', matchedProduct.id);
 
                 if (error) throw error;
-                productId = existingByName.id;
+                productId = matchedProduct.id;
                 isUpdate = true;
               } else {
                 const { data: newProduct, error } = await supabase
