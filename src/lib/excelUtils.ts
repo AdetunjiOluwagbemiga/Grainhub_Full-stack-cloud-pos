@@ -101,7 +101,9 @@ export async function importProductsFromExcel(
 
           const skuMap = new Map<string, any>();
           const inactiveSkuMap = new Map<string, any>();
+          const existingSkuSet = new Set<string>();
           const productNames = batch.map(row => String(row.Name || '').trim()).filter(Boolean);
+          const batchSkus = batch.map(row => String(row.SKU || '').trim()).filter(Boolean);
 
           if (productNames.length > 0) {
             try {
@@ -121,6 +123,18 @@ export async function importProductsFromExcel(
               });
             } catch (error: any) {
               errors.push(`Batch lookup error: ${error.message}`);
+            }
+          }
+
+          if (batchSkus.length > 0) {
+            try {
+              const { data: skuConflicts } = await supabase
+                .from('products')
+                .select('sku')
+                .in('sku', batchSkus);
+
+              skuConflicts?.forEach(prod => existingSkuSet.add(prod.sku));
+            } catch {
             }
           }
 
@@ -150,7 +164,7 @@ export async function importProductsFromExcel(
               if (matchedProduct) {
                 sku = matchedProduct.sku;
               } else {
-                if (!sku || sku === '') {
+                if (!sku || sku === '' || existingSkuSet.has(sku)) {
                   sku = `AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
                 }
               }
