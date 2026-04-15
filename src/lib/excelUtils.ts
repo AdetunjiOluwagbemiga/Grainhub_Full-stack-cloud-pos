@@ -1,6 +1,25 @@
 import * as XLSX from 'xlsx';
 import { supabase } from './supabase';
 
+function parseExcelDate(value: any): string | null {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'number') {
+    const date = XLSX.SSF.parse_date_code(value);
+    if (!date) return null;
+    const y = date.y;
+    const m = String(date.m).padStart(2, '0');
+    const d = String(date.d).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+  const str = String(value).trim();
+  if (!str) return null;
+  const parts = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (parts) return str;
+  const dmY = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (dmY) return `${dmY[3]}-${dmY[2].padStart(2, '0')}-${dmY[1].padStart(2, '0')}`;
+  return null;
+}
+
 export interface ProductExcelRow {
   SKU?: string;
   Name: string;
@@ -177,7 +196,7 @@ export async function importProductsFromExcel(
                 retail_price: numRetailPrice,
                 tax_rate: row['Tax Rate (%)'] ? Number(row['Tax Rate (%)']) : 0,
                 unit_of_measure: row['Unit of Measure'] ? String(row['Unit of Measure']).trim() : 'piece',
-                expiry_date: row['Expiry Date'] ? String(row['Expiry Date']).trim() : null,
+                expiry_date: parseExcelDate(row['Expiry Date']),
                 alert_days_before_expiry: row['Alert Days Before Expiry'] ? Number(row['Alert Days Before Expiry']) : 7,
                 category_id: null,
                 has_variants: false,

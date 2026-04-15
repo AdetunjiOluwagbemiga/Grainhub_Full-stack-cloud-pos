@@ -195,9 +195,11 @@ export function ProductsPage() {
       }
 
       if (result.errors.length > 0) {
+        const preview = result.errors.slice(0, 3).join('\n');
+        const more = result.errors.length > 3 ? `\n...and ${result.errors.length - 3} more` : '';
         toast.error(
-          `${message} with ${result.errors.length} errors. Check console for details.`,
-          { id: toastId, duration: 5000 }
+          `${message} with ${result.errors.length} errors:\n${preview}${more}`,
+          { id: toastId, duration: 10000 }
         );
         console.error('Import errors:', result.errors);
       } else {
