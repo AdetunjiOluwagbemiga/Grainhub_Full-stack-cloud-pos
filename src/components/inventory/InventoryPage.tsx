@@ -28,6 +28,7 @@ export function InventoryPage() {
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [importing, setImporting] = useState(false);
+  const [adjustMode, setAdjustMode] = useState<'change' | 'set'>('set');
   const [adjustment, setAdjustment] = useState({
     quantity_change: '',
     reason: 'correction',
@@ -71,11 +72,16 @@ export function InventoryPage() {
     }
 
     try {
+      const inputValue = parseFloat(adjustment.quantity_change);
+      const quantityChange = adjustMode === 'set'
+        ? inputValue - (selectedItem.quantity || 0)
+        : inputValue;
+
       await stockAdjustment.mutateAsync({
         location_id: selectedItem.location_id,
         product_id: selectedItem.product_id,
         variant_id: selectedItem.variant_id,
-        quantity_change: parseFloat(adjustment.quantity_change),
+        quantity_change: quantityChange,
         reason: adjustment.reason,
         notes: adjustment.notes || null,
         adjusted_by: null,
@@ -332,6 +338,7 @@ export function InventoryPage() {
         onClose={() => {
           setAdjustModalOpen(false);
           setSelectedItem(null);
+          setAdjustment({ quantity_change: '', reason: 'correction', notes: '' });
         }}
         title="Adjust Stock"
       >
@@ -346,11 +353,28 @@ export function InventoryPage() {
               </p>
             </div>
 
+            <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => { setAdjustMode('set'); setAdjustment(a => ({ ...a, quantity_change: '' })); }}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${adjustMode === 'set' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                Set Exact Quantity
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAdjustMode('change'); setAdjustment(a => ({ ...a, quantity_change: '' })); }}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${adjustMode === 'change' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+              >
+                Add / Remove
+              </button>
+            </div>
+
             <Input
-              label="Quantity Change (+ to add, - to remove)"
+              label={adjustMode === 'set' ? 'New Stock Quantity' : 'Quantity Change (+ to add, - to remove)'}
               type="number"
               step="0.01"
-              placeholder="e.g., +10 or -5"
+              placeholder={adjustMode === 'set' ? 'e.g., 50' : 'e.g., +10 or -5'}
               value={adjustment.quantity_change}
               onChange={(e) => setAdjustment({ ...adjustment, quantity_change: e.target.value })}
               required
