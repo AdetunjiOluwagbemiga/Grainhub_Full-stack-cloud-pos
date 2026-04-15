@@ -62,6 +62,7 @@ export function ProductsPage() {
 
       const productData = {
         ...formDataWithoutQuantity,
+        sku: formData.sku.trim() || `AUTO-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
         cost_price: parseFloat(formData.cost_price),
         retail_price: parseFloat(formData.retail_price),
         margin_percent: formData.margin_percent ? parseFloat(formData.margin_percent) : 0,
@@ -467,10 +468,10 @@ export function ProductsPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
-              label="SKU"
+              label="SKU (optional — auto-generated if blank)"
               value={formData.sku}
               onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-              required
+              placeholder="Leave blank to auto-generate"
             />
             <Input
               label="Name"
@@ -627,7 +628,7 @@ export function ProductsPage() {
             <Button
               className="flex-1"
               onClick={handleSubmit}
-              disabled={!formData.sku || !formData.name || !formData.retail_price}
+              disabled={!formData.name || !formData.retail_price}
             >
               {editingProduct ? 'Update Product' : 'Create Product'}
             </Button>
