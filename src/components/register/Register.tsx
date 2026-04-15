@@ -17,10 +17,23 @@ import toast from 'react-hot-toast';
 export function Register() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('pos_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editQuantity, setEditQuantity] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('pos_cart_customer') || null;
+    } catch {
+      return null;
+    }
+  });
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [showSummary, setShowSummary] = useState(false);
@@ -32,6 +45,22 @@ export function Register() {
   const { formatCurrency } = useCurrency();
   const { data: paymentMethods } = usePaymentMethods();
   const { data: activeShift } = useActiveShift();
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('pos_cart', JSON.stringify(cart));
+    } catch {}
+  }, [cart]);
+
+  useEffect(() => {
+    try {
+      if (selectedCustomer) {
+        localStorage.setItem('pos_cart_customer', selectedCustomer);
+      } else {
+        localStorage.removeItem('pos_cart_customer');
+      }
+    } catch {}
+  }, [selectedCustomer]);
 
   const quickSaleProducts = products?.filter(p => p.is_quick_sale) || [];
 
@@ -243,6 +272,10 @@ export function Register() {
 
     setCart([]);
     setSelectedCustomer(null);
+    try {
+      localStorage.removeItem('pos_cart');
+      localStorage.removeItem('pos_cart_customer');
+    } catch {}
     if (!silent) {
       toast.success('Cart cleared');
     }
