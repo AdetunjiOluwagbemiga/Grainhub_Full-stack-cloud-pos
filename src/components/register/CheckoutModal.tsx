@@ -11,7 +11,6 @@ import { useSettings } from '../../hooks/useSettings';
 import { CartItem } from '../../types/database';
 import { useCurrency } from '../../contexts/CurrencyContext';
 import { generateReceiptHTML, printReceipt, downloadReceipt } from '../../lib/utils';
-import { supabase } from '../../lib/supabase';
 import toast from 'react-hot-toast';
 
 interface CheckoutModalProps {
@@ -59,7 +58,6 @@ export function CheckoutModal({
   const [processing, setProcessing] = useState(false);
   const [saleCompleted, setSaleCompleted] = useState(false);
   const [completedSaleData, setCompletedSaleData] = useState<any>(null);
-  const [printCount, setPrintCount] = useState(0);
 
   const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
   const remaining = total - totalPaid;
@@ -74,7 +72,6 @@ export function CheckoutModal({
       setSaleCompleted(false);
       setCompletedSaleData(null);
       setProcessing(false);
-      setPrintCount(0);
     }
   }, [isOpen]);
 
@@ -138,27 +135,12 @@ export function CheckoutModal({
     );
   };
 
-  const incrementPrintCount = async () => {
-    if (!completedSaleData?.id) return;
-    try {
-      const { data, error } = await supabase.rpc('increment_print_count', {
-        p_sale_id: completedSaleData.id,
-      });
-      if (!error && data != null) {
-        setPrintCount(data);
-      }
-    } catch {
-      // non-blocking -- don't prevent receipt from printing
-    }
-  };
-
-  const handlePrintReceipt = async () => {
+  const handlePrintReceipt = () => {
     if (!completedSaleData) return;
 
     try {
       const receiptHTML = getReceiptHTML();
       printReceipt(receiptHTML);
-      await incrementPrintCount();
       toast.success('Receipt sent to printer');
     } catch (printError) {
       console.error('Print failed:', printError);
@@ -166,14 +148,13 @@ export function CheckoutModal({
     }
   };
 
-  const handleDownloadReceipt = async () => {
+  const handleDownloadReceipt = () => {
     if (!completedSaleData) return;
 
     try {
       const receiptHTML = getReceiptHTML();
       const filename = `receipt-${completedSaleData.sale_number}.html`;
       downloadReceipt(receiptHTML, filename);
-      await incrementPrintCount();
       toast.success('Receipt downloaded successfully');
     } catch (error) {
       console.error('Download failed:', error);
@@ -400,27 +381,15 @@ export function CheckoutModal({
               </div>
 
               <div className="space-y-3">
-                {printCount > 0 && (
-                  <div className="flex items-center justify-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    <Printer className="w-4 h-4" />
-                    <span>Printed {printCount} {printCount === 1 ? 'time' : 'times'}</span>
-                  </div>
-                )}
-
                 <div className="grid grid-cols-2 gap-2 lg:gap-3">
                   <Button
                     variant="outline"
                     size="lg"
                     onClick={handlePrintReceipt}
-                    className="text-sm lg:text-base relative"
+                    className="text-sm lg:text-base"
                   >
                     <Printer className="w-4 h-4 lg:w-5 lg:h-5 lg:mr-2" />
                     <span className="hidden lg:inline">Print</span>
-                    {printCount > 0 && (
-                      <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                        {printCount}
-                      </span>
-                    )}
                   </Button>
 
                   <Button
