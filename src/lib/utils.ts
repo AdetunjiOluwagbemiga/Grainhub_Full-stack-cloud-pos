@@ -119,7 +119,9 @@ function generateSingleReceipt(
   }>,
   storeName: string,
   storeAddress: string,
-  copyLabel: string
+  copyLabel: string,
+  cashierName: string,
+  paymentDetails: Array<{ method: string; amount: number }>
 ): string {
   return `
     <div class="receipt-copy">
@@ -133,6 +135,7 @@ function generateSingleReceipt(
       <div class="info">
         <div>Receipt #: ${sale.sale_number}</div>
         <div>Date: ${formatDate(sale.created_at)}</div>
+        <div>Cashier: ${cashierName}</div>
       </div>
 
       <div class="items">
@@ -166,14 +169,26 @@ function generateSingleReceipt(
           <span>TOTAL:</span>
           <span>${formatCurrency(sale.total_amount)}</span>
         </div>
+      </div>
+
+      <div class="payment-section">
+        <div class="payment-header">Payment</div>
+        ${paymentDetails.map(p => `
+          <div class="total-line">
+            <span>${p.method}:</span>
+            <span>${formatCurrency(p.amount)}</span>
+          </div>
+        `).join('')}
         <div class="total-line">
-          <span>Paid:</span>
+          <span>Total Paid:</span>
           <span>${formatCurrency(sale.amount_paid)}</span>
         </div>
-        <div class="total-line">
-          <span>Change:</span>
-          <span>${formatCurrency(sale.change_amount)}</span>
-        </div>
+        ${sale.change_amount > 0 ? `
+          <div class="total-line">
+            <span>Change:</span>
+            <span>${formatCurrency(sale.change_amount)}</span>
+          </div>
+        ` : ''}
       </div>
 
       <div class="footer">
@@ -202,10 +217,12 @@ export function generateReceiptHTML(
     line_total: number;
   }>,
   storeName: string = 'POS System',
-  storeAddress: string = ''
+  storeAddress: string = '',
+  cashierName: string = '',
+  paymentDetails: Array<{ method: string; amount: number }> = []
 ): string {
-  const merchantCopy = generateSingleReceipt(sale, items, storeName, storeAddress, 'MERCHANT COPY');
-  const customerCopy = generateSingleReceipt(sale, items, storeName, storeAddress, 'CUSTOMER COPY');
+  const merchantCopy = generateSingleReceipt(sale, items, storeName, storeAddress, 'MERCHANT COPY', cashierName, paymentDetails);
+  const customerCopy = generateSingleReceipt(sale, items, storeName, storeAddress, 'CUSTOMER COPY', cashierName, paymentDetails);
 
   return `
     <!DOCTYPE html>
@@ -311,6 +328,16 @@ export function generateReceiptHTML(
           margin-top: 5px;
           padding-top: 5px;
           border-top: 2px solid #000;
+        }
+        .payment-section {
+          margin: 10px 0;
+          padding-top: 8px;
+          border-top: 1px dashed #000;
+        }
+        .payment-header {
+          font-weight: 900;
+          font-size: 12px;
+          margin-bottom: 4px;
         }
         .footer {
           text-align: center;

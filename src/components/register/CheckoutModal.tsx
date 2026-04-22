@@ -104,6 +104,13 @@ export function CheckoutModal({
   const getReceiptHTML = () => {
     if (!completedSaleData) return '';
 
+    const cashierName = profile?.full_name || profile?.username || 'Staff';
+
+    const paymentDetails = payments.map(p => {
+      const method = allPaymentMethods?.find(m => m.id === p.payment_method_id);
+      return { method: method?.name || 'Unknown', amount: p.amount };
+    });
+
     return generateReceiptHTML(
       {
         sale_number: completedSaleData.sale_number,
@@ -122,7 +129,9 @@ export function CheckoutModal({
         line_total: item.line_total,
       })),
       settings?.store_name || 'POS System',
-      settings?.store_address || ''
+      settings?.store_address || '',
+      cashierName,
+      paymentDetails
     );
   };
 
