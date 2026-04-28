@@ -61,36 +61,10 @@ Deno.serve(async (req: Request) => {
       throw new Error('You cannot delete your own account');
     }
 
-    const { count: salesCount, error: salesError } = await supabaseAdmin
-      .from('sales')
-      .select('*', { count: 'exact', head: true })
-      .eq('cashier_id', userId);
-
-    if (salesError) {
-      console.error('Error checking sales:', salesError);
-    }
-
-    const { count: refundsCount, error: refundsError } = await supabaseAdmin
-      .from('refunds')
-      .select('*', { count: 'exact', head: true })
-      .eq('refunded_by', userId);
-
-    if (refundsError) {
-      console.error('Error checking refunds:', refundsError);
-    }
-
-    if (salesCount && salesCount > 0) {
-      throw new Error(`Cannot delete user with ${salesCount} existing sales. Please reassign or delete their transactions first.`);
-    }
-
-    if (refundsCount && refundsCount > 0) {
-      throw new Error(`Cannot delete user with ${refundsCount} existing refunds. Please reassign or delete their transactions first.`);
-    }
-
     const { error: deleteAuthError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
     if (deleteAuthError) {
-      throw new Error(`Failed to delete user from auth: ${deleteAuthError.message}`);
+      throw new Error(`Failed to delete user: ${deleteAuthError.message}`);
     }
 
     return new Response(
